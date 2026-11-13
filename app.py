@@ -1,6 +1,8 @@
 
+
 import streamlit as st
-from PIL import Image
+from PIL import Image, ImageOps
+import os
 
 st.set_page_config(
     page_title="AMAZON FACE AI",
@@ -25,88 +27,91 @@ h1, h2, h3, p, label {
     color: #102D22;
     border-radius: 10px;
     font-weight: bold;
-    border: none;
-    min-height: 45px;
 }
 </style>
 """, unsafe_allow_html=True)
 
+# MENÚ
 st.sidebar.title("🌿 AMAZON FACE AI")
 st.sidebar.caption("Inteligencia artificial amazónica")
+
 pagina = st.sidebar.radio(
     "MENÚ PRINCIPAL",
-    ["Inicio", "Análisis facial", "Base de referencias",
-     "Resultados", "Modelo matemático", "Acerca del proyecto"]
+    [
+        "Inicio",
+        "Análisis facial",
+        "Base de referencias",
+        "Resultados",
+        "Modelo matemático",
+        "Acerca del proyecto"
+    ]
 )
+
+# UBICACIÓN DE LA IMAGEN
+RUTA_REFERENCIA = "rostros_referencia.png"
 
 if pagina == "Inicio":
     st.title("AMAZON FACE AI")
     st.subheader("Geometría facial e inteligencia artificial")
 
-    st.markdown("""
-    ### Tecnología al servicio de nuestra Amazonía
-
-    Plataforma de investigación desarrollada en Python
-    para analizar características geométricas faciales
-    y compararlas con fotografías de referencia
-    documentadas de los pueblos Awajún y Wampis.
-    """)
+    st.write(
+        "Plataforma experimental para estudiar "
+        "características geométricas faciales y "
+        "compararlas con imágenes de referencia autorizadas."
+    )
 
     st.divider()
-    st.subheader("Comienza tu análisis")
 
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown("### 📁 Subir fotografía")
-        st.write("Selecciona una imagen desde tu dispositivo.")
+        st.subheader("📁 Subir fotografía")
         archivo = st.file_uploader(
-            "Seleccionar imagen",
+            "Selecciona una fotografía",
             type=["jpg", "jpeg", "png"]
         )
+
         if archivo:
             imagen = Image.open(archivo).convert("RGB")
-            st.image(imagen, caption="Fotografía seleccionada",
-                     use_container_width=True)
+            st.image(imagen, caption="Fotografía seleccionada")
 
     with col2:
-        st.markdown("### 📷 Activar cámara")
-        st.write("Captura una fotografía utilizando tu cámara.")
+        st.subheader("📷 Activar cámara")
         foto = st.camera_input("Tomar fotografía")
 
         if foto:
-            imagen_camara = Image.open(foto).convert("RGB")
-            st.image(imagen_camara, use_container_width=True)
-
-    st.info("La comparación facial se incorporará en la siguiente etapa.")
+            imagen = Image.open(foto).convert("RGB")
+            st.image(imagen, caption="Fotografía capturada")
 
 elif pagina == "Análisis facial":
     st.title("Análisis facial")
-    st.write("Aquí se realizará la detección de puntos y geometría facial.")
+    st.info("Módulo experimental de análisis geométrico.")
 
 elif pagina == "Base de referencias":
-    st.title("Base de referencias")
-    st.write("Aquí se administrarán las fotografías autorizadas de referencia.")
+    st.title("Base de fotografías de referencia")
+
+    if os.path.exists(RUTA_REFERENCIA):
+        imagen = Image.open(RUTA_REFERENCIA).convert("RGB")
+        st.image(
+            imagen,
+            caption="Imagen de referencia cargada",
+            use_container_width=True
+        )
+        st.success("La imagen de referencia se encontró correctamente.")
+    else:
+        st.error("No se encontró rostros_referencia.png.")
 
 elif pagina == "Resultados":
     st.title("Resultados")
-    st.write("Aquí se mostrarán los porcentajes y categorías de similitud.")
-
-    st.markdown("""
-    - 90% – 100%: Muy parecido
-    - 75% – 89%: Parecido
-    - 50% – 74%: Similitud moderada
-    - 0% – 49%: Baja similitud
-    """)
+    st.write("Aquí se presentarán los resultados cuando se implemente y valide el modelo.")
 
 elif pagina == "Modelo matemático":
     st.title("Modelo matemático")
-    st.write("Metodología de extracción y comparación geométrica.")
+    st.write("Metodología de comparación geométrica facial.")
 
 elif pagina == "Acerca del proyecto":
     st.title("Acerca de AMAZON FACE AI")
-    st.write("""
-    Proyecto de investigación sobre visión computacional,
-    análisis geométrico facial y comparación de muestras
-    de referencia de la Amazonía peruana.
-    """)
+    st.write(
+        "Proyecto experimental de visión computacional "
+        "y análisis geométrico facial."
+    )
