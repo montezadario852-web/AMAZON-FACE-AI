@@ -1,516 +1,375 @@
 
 import streamlit as st
+import cv2
+import mediapipe as mp
+import numpy as np
+import pandas as pd
+import plotly.express as px
 from PIL import Image
-import os
+from pathlib import Path
 
+# --------------------------------------------------
+# CONFIGURACIÓN
+# --------------------------------------------------
 st.set_page_config(
     page_title="AMAZON FACE AI",
     page_icon="🌿",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# ==========================================
-# DISEÑO VISUAL
-# ==========================================
-
+# --------------------------------------------------
+# ESTILO VISUAL: AMAZONÍA PERUANA
+# --------------------------------------------------
 st.markdown("""
 <style>
 .stApp {
-    background: linear-gradient(135deg, #061B11, #103923);
-    color: white;
+    background:
+      radial-gradient(circle at 85% 8%, #245b42 0%, transparent 28%),
+      linear-gradient(135deg, #071b14, #102d20 55%, #071811);
+    color: #f5f2e8;
 }
-
-section[data-testid="stSidebar"] {
-    background: #041F14;
-    border-right: 2px solid #B9953B;
+[data-testid="stSidebar"] {
+    background: linear-gradient(180deg,#06170f,#123b29);
+    border-right: 1px solid #bd9b4b;
 }
-
-h1, h2, h3, p, label {
-    color: white !important;
-}
-
-.gold {
-    color: #E7BD50;
-}
-
+h1,h2,h3 { color: #f0d28a !important; }
+p, label, span { color: #f1eee4; }
 .hero {
-    background: linear-gradient(110deg, #062719, #17462D);
-    border: 2px solid #C39B3B;
-    border-radius: 17px;
-    padding: 25px;
-    margin-bottom: 20px;
+    padding: 28px;
+    border: 1px solid #b99549;
+    border-radius: 22px;
+    background: linear-gradient(120deg,#123b29,#0a2118);
+    box-shadow: 0 12px 35px #0006;
 }
-
-.hero h1 {
-    color: #E7BD50 !important;
-    font-size: 43px;
+.hero-title {
+    font-size: 42px;
     font-weight: 900;
+    color: #f1d58e;
+    letter-spacing: 2px;
 }
-
-.hero h3 {
-    font-size: 21px;
+.hero-subtitle {
+    font-size: 18px;
+    color: #f6f0df;
 }
-
-.hero p {
-    font-size: 17px;
-}
-
 .panel {
-    background: linear-gradient(145deg, #0B3823, #062719);
-    border: 2px solid #C49D42;
+    padding: 20px;
+    border: 1px solid #8c7946;
     border-radius: 17px;
-    padding: 22px;
-    min-height: 150px;
+    background: #10291f;
+    margin-bottom: 14px;
 }
-
-.stButton button {
-    background: #DDB447;
-    color: #102719;
-    border-radius: 10px;
+.small-note {
+    color: #c8d7c9;
+    font-size: 13px;
+}
+div.stButton > button {
+    background: linear-gradient(90deg,#c49b45,#e5c879);
+    color: #142318;
+    border: 0;
+    border-radius: 12px;
     font-weight: bold;
-    border: none;
-    min-height: 45px;
 }
-
-.stButton button:hover {
-    background: #F1CE69;
-    color: #102719;
-}
-
-/* PANEL DE RESULTADOS */
-
-.result-card {
-    background: linear-gradient(130deg, #062719, #0B3823);
-    border: 2px solid #D4AD45;
-    border-radius: 20px;
-    padding: 25px;
-    margin-top: 15px;
-    box-shadow: 0 0 20px rgba(213,173,66,0.18);
-}
-
-.result-title {
-    color: #E8BD4F;
-    font-size: 27px;
-    font-weight: 900;
-    text-align: center;
-}
-
-/* ARO ANIMADO */
-
-.gauge {
-    width: 205px;
-    height: 205px;
-    border-radius: 50%;
-    background: conic-gradient(
-        #EBC34F 0deg,
-        #D49C26 250deg,
-        #17442C 250deg,
-        #17442C 360deg
-    );
-    margin: 22px auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: girar 8s linear infinite;
-    box-shadow: 0 0 25px rgba(230,184,58,0.38);
-}
-
-.gauge-inner {
-    width: 165px;
-    height: 165px;
-    border-radius: 50%;
-    background: #082719;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    animation: contragiro 8s linear infinite;
-}
-
-.percentage {
-    font-size: 49px;
-    font-weight: 900;
-    color: white;
-    animation: brillo 2s ease-in-out infinite;
-}
-
-@keyframes girar {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-@keyframes contragiro {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(-360deg); }
-}
-
-@keyframes brillo {
-    0%, 100% { text-shadow: 0 0 5px #E7BD50; }
-    50% { text-shadow: 0 0 22px #E7BD50; }
-}
-
-/* CATEGORIA */
-
-.category {
-    display: inline-block;
-    background: linear-gradient(90deg, #E3B53C, #F5D66A);
-    color: #102719;
-    padding: 11px 35px;
-    border-radius: 35px;
-    font-size: 23px;
-    font-weight: 900;
-    text-align: center;
-    margin: 10px auto;
-}
-
-/* INTERVALOS */
-
-.interval-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 9px 0;
-}
-
-.interval-number {
-    width: 125px;
-    text-align: center;
-    padding: 12px 5px;
-    border-radius: 10px;
-    font-weight: 900;
-    color: #071B10;
-}
-
-.interval-name {
-    flex: 1;
-    padding: 12px 9px;
-    border-radius: 10px;
-    font-weight: 900;
-    background: #103B24;
-    color: white;
-}
-
-.green1 { background: #078D43; }
-.green2 { background: #35BD29; }
-.yellow { background: #EFC23B; }
-.red { background: #E63333; }
-
-@media (max-width: 700px) {
-    .gauge {
-        width: 170px;
-        height: 170px;
-    }
-    .gauge-inner {
-        width: 138px;
-        height: 138px;
-    }
-    .percentage {
-        font-size: 39px;
-    }
-    .interval-number {
-        width: 105px;
-        font-size: 12px;
-    }
-    .interval-name {
-        font-size: 12px;
-    }
+[data-testid="stMetric"] {
+    background: #123526;
+    border: 1px solid #927a42;
+    border-radius: 14px;
+    padding: 14px;
 }
 </style>
 """, unsafe_allow_html=True)
 
+# --------------------------------------------------
+# FUNCIONES DE ANÁLISIS
+# --------------------------------------------------
+mp_face_mesh = mp.solutions.face_mesh
 
-# ==========================================
-# ARCHIVO DE REFERENCIA
-# ==========================================
+def distancia(p1, p2):
+    return float(np.linalg.norm(np.array(p1) - np.array(p2)))
 
-RUTA_REFERENCIA = "rostros_referencia.png"
+def analizar_fotografia(imagen_pil):
+    imagen = np.array(imagen_pil.convert("RGB"))
+    alto, ancho = imagen.shape[:2]
 
+    with mp_face_mesh.FaceMesh(
+        static_image_mode=True,
+        max_num_faces=1,
+        refine_landmarks=True,
+        min_detection_confidence=0.5
+    ) as detector:
+        resultado = detector.process(imagen)
 
-# ==========================================
-# MENU LATERAL
-# ==========================================
+    if not resultado.multi_face_landmarks:
+        return None, None, None
 
-st.sidebar.markdown("""
-<h1 style="color:#E7BD50 !important; font-size:27px;">
-🌿 AMAZON FACE AI
-</h1>
-<p style="color:white;">Inteligencia artificial amazónica</p>
-<hr style="border-color:#B9953B;">
-""", unsafe_allow_html=True)
+    puntos = resultado.multi_face_landmarks[0].landmark
 
-pagina = st.sidebar.radio(
-    "MENÚ PRINCIPAL",
-    [
-        "Inicio",
-        "Análisis facial",
-        "Base de referencias",
-        "Resultados",
-        "Modelo matemático",
-        "Acerca del proyecto"
+    def punto(indice):
+        return (puntos[indice].x * ancho,
+                puntos[indice].y * alto)
+
+    # Medidas geométricas normalizadas
+    ancho_rostro = distancia(punto(234), punto(454))
+    alto_rostro = distancia(punto(10), punto(152))
+
+    if ancho_rostro <= 0:
+        return None, None, None
+
+    medidas = {
+        "Distancia entre ojos": distancia(punto(33), punto(263)) / ancho_rostro,
+        "Ancho de nariz": distancia(punto(98), punto(327)) / ancho_rostro,
+        "Ancho de boca": distancia(punto(61), punto(291)) / ancho_rostro,
+        "Relación altura/ancho": alto_rostro / ancho_rostro
+    }
+
+    # Dibujar malla y puntos detectados
+    imagen_malla = imagen.copy()
+
+    conexiones = [
+        (33, 263), (234, 454), (10, 152),
+        (98, 327), (61, 291), (33, 234),
+        (263, 454), (10, 33), (10, 263)
     ]
+
+    for a, b in conexiones:
+        pa = tuple(np.round(punto(a)).astype(int))
+        pb = tuple(np.round(punto(b)).astype(int))
+        cv2.line(imagen_malla, pa, pb, (218, 181, 91), 2)
+
+    for indice in [10, 33, 61, 98, 152, 234, 263, 291, 327, 454]:
+        px_, py_ = np.round(punto(indice)).astype(int)
+        cv2.circle(imagen_malla, (px_, py_), 5, (60, 230, 150), -1)
+
+    # Indicador técnico orientativo de calidad de captura
+    gris = cv2.cvtColor(imagen, cv2.COLOR_RGB2GRAY)
+    brillo = float(np.mean(gris))
+    nitidez = float(cv2.Laplacian(gris, cv2.CV_64F).var())
+    proporcion_rostro = ancho_rostro / ancho
+
+    puntaje_brillo = np.clip(100 - abs(brillo - 130) * 0.7, 0, 100)
+    puntaje_nitidez = np.clip(nitidez / 150 * 100, 0, 100)
+    puntaje_tamano = np.clip(proporcion_rostro / 0.45 * 100, 0, 100)
+
+    calidad = round(
+        0.35 * puntaje_brillo
+        + 0.35 * puntaje_nitidez
+        + 0.30 * puntaje_tamano
+    )
+
+    return imagen_malla, medidas, calidad
+
+# --------------------------------------------------
+# MENÚ LATERAL
+# --------------------------------------------------
+st.sidebar.markdown("## 🌿 AMAZON FACE AI")
+st.sidebar.caption("Tecnología y análisis geométrico facial")
+pagina = st.sidebar.radio(
+    "NAVEGACIÓN",
+    ["Inicio", "Análisis facial", "Acerca del proyecto"]
 )
 
+st.sidebar.markdown("---")
+st.sidebar.markdown("🌳 **Amazonía peruana**")
+st.sidebar.caption("Naturaleza · Ciencia · Tecnología")
 
-# ==========================================
-# FUNCION DE INTERVALOS
-# ==========================================
-
-def mostrar_intervalos():
-
+# --------------------------------------------------
+# PORTADA
+# --------------------------------------------------
+if pagina == "Inicio":
     st.markdown("""
-    <div class="interval-row">
-        <div class="interval-number green1">
-            90 – 100%
-        </div>
-        <div class="interval-name">
-            MUY PARECIDO
-        </div>
-    </div>
-
-    <div class="interval-row">
-        <div class="interval-number green2">
-            75 – 89%
-        </div>
-        <div class="interval-name">
-            PARECIDO
-        </div>
-    </div>
-
-    <div class="interval-row">
-        <div class="interval-number yellow">
-            50 – 74%
-        </div>
-        <div class="interval-name">
-            SIMILITUD MODERADA
-        </div>
-    </div>
-
-    <div class="interval-row">
-        <div class="interval-number red">
-            0 – 49%
-        </div>
-        <div class="interval-name">
-            BAJA SIMILITUD
-        </div>
+    <div class="hero">
+      <div class="hero-title">🌿 AMAZON FACE AI</div>
+      <div class="hero-subtitle">
+        Geometría facial e inteligencia artificial
+      </div>
+      <p>Una herramienta experimental para visualizar
+      características geométricas del rostro mediante visión
+      computacional.</p>
+      <div style="font-size:35px;">🌳 🦜 🍃 🌊 🌴</div>
+      <p style="color:#e5c879;font-weight:bold;">
+        TECNOLOGÍA AL SERVICIO DE NUESTRA AMAZONÍA
+      </p>
     </div>
     """, unsafe_allow_html=True)
 
+    st.write("")
+    c1, c2 = st.columns(2)
 
-# ==========================================
-# INICIO
-# ==========================================
-
-if pagina == "Inicio":
-
-    col1, col2 = st.columns([1.2, 1])
-
-    with col1:
-        st.markdown("""
-        <div class="hero">
-            <h1>AMAZON FACE AI</h1>
-            <h3>Geometría facial e inteligencia artificial</h3>
-            <hr style="border-color:#D2AC45;">
-            <p><b>Tecnología al servicio de nuestra Amazonía</b></p>
-            <p>
-            Plataforma experimental para el análisis
-            de características geométricas faciales
-            y su comparación con imágenes de referencia.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with col2:
-        if os.path.exists(RUTA_REFERENCIA):
-            st.image(
-                RUTA_REFERENCIA,
-                use_container_width=True
+    with c1:
+        st.markdown('<div class="panel">', unsafe_allow_html=True)
+        st.subheader("📷 Análisis facial")
+        st.write("Carga una fotografía o utiliza la cámara para detectar puntos y medidas geométricas.")
+        st.button(
+            "Ir al análisis facial",
+            on_click=lambda: st.session_state.update(
+                {"ir_analisis": True}
             )
-        else:
-            st.info("Imagen de referencia pendiente de cargar.")
+        )
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown("## COMIENZA TU ANÁLISIS")
+    with c2:
+        st.markdown('<div class="panel">', unsafe_allow_html=True)
+        st.subheader("📊 Resultados visuales")
+        st.write("Visualiza las medidas detectadas, los gráficos y la calidad de la fotografía.")
+        st.markdown("**Análisis individual de cada imagen.**")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    st.info(
+        "Esta aplicación analiza geometría facial. "
+        "No determina identidad, origen étnico ni pertenencia "
+        "a pueblos indígenas."
+    )
+
+# --------------------------------------------------
+# ANÁLISIS FACIAL
+# --------------------------------------------------
+elif pagina == "Análisis facial":
+    st.title("📷 Análisis geométrico facial")
+    st.write(
+        "Selecciona una fotografía o toma una imagen con tu cámara."
+    )
 
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
-        st.subheader("📁 Subir fotografía")
-
         archivo = st.file_uploader(
-            "Selecciona una fotografía",
+            "Subir fotografía",
             type=["jpg", "jpeg", "png"]
         )
 
-        if archivo:
-            imagen = Image.open(archivo).convert("RGB")
-            st.image(imagen, caption="Fotografía seleccionada",
-                     use_container_width=True)
-
-        st.markdown('</div>', unsafe_allow_html=True)
-
     with col2:
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
-        st.subheader("📷 Activar cámara")
+        camara = st.camera_input("Activar cámara")
 
-        foto = st.camera_input("Capturar fotografía")
+    imagen_seleccionada = camara if camara is not None else archivo
 
-        if foto:
-            imagen = Image.open(foto).convert("RGB")
-            st.image(imagen, caption="Fotografía capturada",
-                     use_container_width=True)
+    if imagen_seleccionada is not None:
+        imagen = Image.open(imagen_seleccionada).convert("RGB")
 
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("### Fotografía seleccionada")
+        st.image(imagen, use_container_width=True)
 
-    # RESULTADO VISUAL DE EJEMPLO
+        if st.button("🔍 ANALIZAR FOTOGRAFÍA", use_container_width=True):
+            with st.spinner("Detectando puntos faciales..."):
+                imagen_malla, medidas, calidad = analizar_fotografia(imagen)
 
-    st.markdown("""
-    <div class="result-card">
-        <div class="result-title">
-            RESULTADO DE COMPARACIÓN
-        </div>
+            if imagen_malla is None:
+                st.error(
+                    "No se detectó un rostro con suficiente claridad. "
+                    "Prueba con una fotografía frontal, iluminada y nítida."
+                )
+            else:
+                st.success("Se detectó un rostro y se calcularon sus medidas.")
 
-        <div class="gauge">
-            <div class="gauge-inner">
-                <div class="percentage">85%</div>
-                <div style="color:#E7BD50;font-weight:bold;">
-                    SIMILITUD
-                </div>
-            </div>
-        </div>
+                st.markdown("## 🧭 Visualización geométrica")
+                st.image(
+                    imagen_malla,
+                    caption="Puntos y líneas geométricas detectadas",
+                    use_container_width=True
+                )
 
-        <div style="text-align:center;">
-            <div class="category">PARECIDO</div>
-        </div>
+                st.markdown("## 📐 Medidas calculadas")
 
-        <p style="text-align:center;">
-            Ejemplo ilustrativo de presentación del resultado
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+                datos = pd.DataFrame({
+                    "Característica": list(medidas.keys()),
+                    "Valor normalizado": list(medidas.values())
+                })
 
-    st.markdown("## CLASIFICACIÓN DE RESULTADOS")
+                c1, c2 = st.columns(2)
+                with c1:
+                    st.metric("Calidad técnica de captura", f"{calidad}%")
+                with c2:
+                    st.metric("Características calculadas", len(medidas))
 
-    mostrar_intervalos()
+                grafico = px.bar(
+                    datos,
+                    x="Característica",
+                    y="Valor normalizado",
+                    color="Valor normalizado",
+                    color_continuous_scale=["#39765a", "#d9b65e"],
+                    title="Distribución de medidas geométricas"
+                )
+                grafico.update_layout(
+                    paper_bgcolor="#10291f",
+                    plot_bgcolor="#10291f",
+                    font_color="#f5f2e8",
+                    coloraxis_showscale=False
+                )
+                st.plotly_chart(grafico, use_container_width=True)
 
+                st.dataframe(
+                    datos,
+                    use_container_width=True,
+                    hide_index=True
+                )
 
-# ==========================================
-# ANALISIS FACIAL
-# ==========================================
+                st.markdown("## 📝 Interpretación técnica")
 
-elif pagina == "Análisis facial":
+                if calidad >= 75:
+                    st.success(
+                        "La fotografía presenta condiciones técnicas "
+                        "favorables para la detección y medición."
+                    )
+                elif calidad >= 50:
+                    st.warning(
+                        "La calidad de captura es intermedia. "
+                        "Se recomienda mejorar la iluminación, el enfoque "
+                        "o el tamaño del rostro en la imagen."
+                    )
+                else:
+                    st.error(
+                        "La calidad de captura es baja. "
+                        "Se recomienda tomar otra fotografía."
+                    )
 
-    st.title("🔎 ANÁLISIS FACIAL")
-
-    st.write("""
-    En esta sección se implementará la detección
-    de puntos faciales y el análisis de características
-    geométricas.
-    """)
-
-    st.info(
-        "La comparación automática se incorporará "
-        "cuando se complete el modelo."
-    )
-
-
-# ==========================================
-# BASE DE REFERENCIAS
-# ==========================================
-
-elif pagina == "Base de referencias":
-
-    st.title("📂 BASE DE FOTOGRAFÍAS DE REFERENCIA")
-
-    if os.path.exists(RUTA_REFERENCIA):
-
-        imagen = Image.open(RUTA_REFERENCIA)
-
-        st.image(
-            imagen,
-            caption="Base de imágenes de prueba",
-            use_container_width=True
-        )
-
-        st.success("Imagen de referencia cargada correctamente.")
+                st.caption(
+                    "El porcentaje representa una estimación técnica "
+                    "de calidad de captura basada en iluminación, nitidez "
+                    "y tamaño del rostro. No representa similitud, "
+                    "probabilidad de identidad ni origen étnico."
+                )
 
     else:
-        st.error("No se encontró rostros_referencia.png")
+        st.info("Primero sube una fotografía o activa la cámara.")
 
-
-# ==========================================
-# RESULTADOS
-# ==========================================
-
-elif pagina == "Resultados":
-
-    st.title("📊 RESULTADOS DE COMPARACIÓN")
+# --------------------------------------------------
+# INFORMACIÓN DEL PROYECTO
+# --------------------------------------------------
+elif pagina == "Acerca del proyecto":
+    st.title("🌳 Acerca de AMAZON FACE AI")
 
     st.markdown("""
-    <div class="result-card">
-        <div class="result-title">RESULTADO DE EJEMPLO</div>
-
-        <div class="gauge">
-            <div class="gauge-inner">
-                <div class="percentage">85%</div>
-                <div style="color:#E7BD50;font-weight:bold;">
-                    SIMILITUD
-                </div>
-            </div>
-        </div>
-
-        <div style="text-align:center;">
-            <div class="category">PARECIDO</div>
-        </div>
+    <div class="panel">
+      <h3>Identidad amazónica y tecnología</h3>
+      <p>
+      AMAZON FACE AI es una aplicación experimental que utiliza
+      técnicas de visión computacional para detectar puntos faciales
+      y calcular proporciones geométricas en fotografías.
+      </p>
+      <p>
+      Su presentación está inspirada en la biodiversidad,
+      los paisajes y la riqueza natural de la Amazonía peruana.
+      </p>
+      <div style="font-size:34px;">🌿 🌳 🦜 🐸 🌺 🌊</div>
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("## INTERVALOS DE CLASIFICACIÓN")
-
-    mostrar_intervalos()
-
-    st.caption(
-        "El 85% es un valor demostrativo. "
-        "No representa todavía una medición real del modelo."
-    )
-
-
-# ==========================================
-# MODELO MATEMATICO
-# ==========================================
-
-elif pagina == "Modelo matemático":
-
-    st.title("📐 MODELO MATEMÁTICO")
-
-    st.write("""
-    El proyecto utilizará características geométricas
-    y distancias normalizadas para realizar comparaciones
-    experimentales entre imágenes faciales.
-    """)
-
-
-# ==========================================
-# ACERCA DEL PROYECTO
-# ==========================================
-
-elif pagina == "Acerca del proyecto":
-
-    st.title("🌿 ACERCA DE AMAZON FACE AI")
-
-    st.write("""
-    AMAZON FACE AI es una aplicación experimental
-    desarrollada en Python para estudiar características
-    geométricas faciales y compararlas con imágenes
-    de referencia documentadas.
-
-    La aplicación permite seleccionar fotografías
-    o utilizar una cámara para realizar pruebas
-    de análisis mediante visión computacional.
-    """)
+    st.subheader("Tecnologías utilizadas")
+    st.write("- Python")
+    st.write("- Streamlit")
+    st.write("- OpenCV")
+    st.write("- MediaPipe")
+    st.write("- Plotly")
+    st.write("- NumPy")
 
     st.warning(
-        "La similitud geométrica no determina la identidad "
-        "ni la pertenencia étnica de una persona."
+        "Las medidas faciales son descriptores geométricos "
+        "experimentales. No permiten determinar la etnia, "
+        "identidad ni comunidad de una persona."
     )
+
+st.markdown("---")
+st.caption("AMAZON FACE AI | Proyecto experimental | Amazonía peruana")
+
+
 
 
