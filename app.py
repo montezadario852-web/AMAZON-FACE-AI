@@ -7,9 +7,9 @@ from PIL import Image, ImageOps, ImageDraw
 from pathlib import Path
 import math
 
-# =========================================================
+# =====================================================
 # CONFIGURACIÓN GENERAL
-# =========================================================
+# =====================================================
 
 st.set_page_config(
     page_title="CRISTOFHER AMAZON AI",
@@ -29,255 +29,177 @@ CREMA = "#FFF9E9"
 BLANCO = "#FFFFFF"
 TEXTO = "#173D2B"
 
-# =========================================================
-# CSS: DISEÑO Y VISIBILIDAD
-# =========================================================
+# =====================================================
+# ESTILOS VISUALES
+# =====================================================
 
 st.markdown("""
 <style>
-.stApp,
-[data-testid="stAppViewContainer"],
-[data-testid="stMain"] {
-    background-color: #FFF9E9 !important;
-}
-
-.stApp p,
-.stApp li,
-.stApp label,
-.stApp span,
-.stApp small,
-.stApp [data-testid="stMarkdownContainer"] p,
-.stApp [data-testid="stMarkdownContainer"] li {
+.stApp {
+    background-color: #FFF9E9;
     color: #173D2B;
 }
 
-.stApp h1, .stApp h2, .stApp h3,
-.stApp h4, .stApp h5 {
-    color: #123D2B !important;
-    font-weight: 900 !important;
+header[data-testid="stHeader"] {
+    background-color: #FFF9E9;
 }
 
-[data-testid="stSidebar"],
-[data-testid="stSidebar"] > div {
-    background-color: #123D2B !important;
+section[data-testid="stSidebar"] {
+    background-color: #123D2B;
 }
 
-[data-testid="stSidebar"] {
-    border-right: 3px solid #F2C968 !important;
-}
-
-[data-testid="stSidebar"] p,
-[data-testid="stSidebar"] span,
-[data-testid="stSidebar"] label,
-[data-testid="stSidebar"] small,
-[data-testid="stSidebar"] li,
-[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] * {
-    color: #FFFFFF !important;
-    opacity: 1 !important;
-}
-
-[data-testid="stSidebar"] h1,
-[data-testid="stSidebar"] h2,
-[data-testid="stSidebar"] h3 {
-    color: #F2C968 !important;
-    font-weight: 950 !important;
-}
-
-[data-testid="stSidebar"] [data-testid="stRadio"] label {
-    background-color: #205A3B !important;
-    color: #FFFFFF !important;
-    border: 1px solid #63866E !important;
-    border-radius: 9px !important;
-    padding: 10px 12px !important;
-    margin: 5px 0 !important;
-    font-weight: 850 !important;
-}
-
-[data-testid="stSidebar"] [data-testid="stRadio"] label * {
+section[data-testid="stSidebar"] * {
     color: #FFFFFF !important;
 }
 
-[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {
-    background-color: #F2C968 !important;
-    border: 2px solid #FFFFFF !important;
+section[data-testid="stSidebar"] label {
+    color: #FFFFFF !important;
+    font-weight: 700;
 }
 
-[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked),
-[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) * {
-    color: #123D2B !important;
-    font-weight: 950 !important;
+h1, h2, h3, h4, p, label, span, div {
+    color: #173D2B;
 }
 
-.stButton > button {
-    background-color: #E2BD65 !important;
-    color: #123D2B !important;
-    border: 2px solid #98752D !important;
-    border-radius: 10px !important;
-    min-height: 48px !important;
-    font-weight: 900 !important;
-}
-
-.stButton > button *,
-.stButton > button p {
-    color: #123D2B !important;
-}
-
-.stButton > button:hover {
-    background-color: #F5D989 !important;
-    border: 2px solid #123D2B !important;
-}
-
-[data-testid="stFileUploader"],
-[data-testid="stCameraInput"] {
-    background-color: #FFFFFF !important;
-    border: 2px solid #B58B30 !important;
-    border-radius: 12px !important;
-    padding: 12px !important;
-}
-
-[data-testid="stFileUploader"] *,
-[data-testid="stCameraInput"] * {
-    color: #123D2B !important;
-    opacity: 1 !important;
-    font-weight: 800 !important;
-}
-
-[data-testid="stFileUploader"] button {
-    background-color: #E2BD65 !important;
-    border: 1px solid #98752D !important;
-}
-
-.stTextInput input,
-.stNumberInput input,
-.stTextArea textarea {
-    background-color: #FFFFFF !important;
-    color: #123D2B !important;
-    border: 2px solid #B58B30 !important;
-}
-
-.stSelectbox [data-baseweb="select"] {
-    background-color: #FFFFFF !important;
-}
-
-.stSelectbox [data-baseweb="select"] * {
-    color: #123D2B !important;
-}
-
-[data-testid="stMetric"] {
-    background-color: #FFFFFF !important;
-    border: 2px solid #D9B45B !important;
-    border-radius: 12px !important;
-    padding: 15px !important;
-}
-
-[data-testid="stMetricLabel"],
-[data-testid="stMetricValue"],
-[data-testid="stMetricDelta"] {
-    color: #123D2B !important;
-}
-
-[data-testid="stAlert"] {
-    background-color: #E8F0E6 !important;
-    border: 2px solid #47734F !important;
-}
-
-[data-testid="stAlert"] p,
-[data-testid="stAlert"] span,
-[data-testid="stAlert"] div {
-    color: #173D2B !important;
+section[data-testid="stSidebar"] h1,
+section[data-testid="stSidebar"] h2,
+section[data-testid="stSidebar"] p {
+    color: #FFFFFF !important;
 }
 
 .hero {
-    background: linear-gradient(120deg, #123D2B, #286044);
-    border: 3px solid #F2C968;
-    border-radius: 20px;
-    padding: 30px 15px;
+    background: linear-gradient(120deg, #123D2B, #205A3B);
+    padding: 28px;
+    border-radius: 18px;
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
+    border-bottom: 5px solid #F2C968;
 }
 
 .hero h1 {
     color: #F2C968 !important;
-    font-size: 2.7rem !important;
-    font-weight: 950 !important;
+    font-size: 36px;
+    font-weight: 900;
+    margin-bottom: 8px;
 }
 
 .hero p {
     color: #FFFFFF !important;
-    font-size: 1.1rem !important;
-    font-weight: 850 !important;
+    font-size: 15px;
+    font-weight: 600;
 }
 
 .panel {
-    background-color: #FFFFFF !important;
-    border: 2px solid #D9B45B;
-    border-radius: 15px;
+    background: #FFFFFF;
     padding: 20px;
-    margin: 10px 0;
-}
-
-.panel h3, .panel p, .panel li {
-    color: #173D2B !important;
+    border-radius: 15px;
+    border: 1px solid #D9D2BB;
+    margin-bottom: 18px;
 }
 
 .resultado {
-    background-color: #E5F0E5 !important;
-    border: 3px solid #205A3B;
-    border-radius: 18px;
-    padding: 25px;
+    background: #FFFFFF;
+    padding: 22px;
+    border-radius: 16px;
+    border: 2px solid #D7B45A;
     text-align: center;
+    min-height: 145px;
 }
 
 .resultado-numero {
-    color: #123D2B !important;
-    font-size: 3rem;
-    font-weight: 950;
+    color: #205A3B !important;
+    font-size: 43px;
+    font-weight: 900;
 }
 
 .resultado-texto {
-    color: #123D2B !important;
-    font-size: 1.35rem;
-    font-weight: 950;
+    color: #173D2B !important;
+    font-weight: 800;
+    font-size: 15px;
 }
 
 .nota {
-    background-color: #FFF0C5 !important;
-    border-left: 7px solid #B58B30;
+    background: #F4E8C5;
+    border-left: 5px solid #C49A35;
     border-radius: 10px;
-    padding: 17px;
-    color: #49380F !important;
+    padding: 15px;
+    margin: 12px 0;
+}
+
+.stButton > button {
+    background-color: #205A3B;
+    color: white !important;
+    border: 2px solid #F2C968;
+    border-radius: 10px;
+    font-weight: 800;
+    min-height: 45px;
+}
+
+.stButton > button:hover {
+    background-color: #123D2B;
+    color: #F2C968 !important;
+}
+
+.stDownloadButton > button {
+    background-color: #205A3B;
+    color: white !important;
+}
+
+[data-testid="stFileUploader"] {
+    background: #FFFFFF;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px dashed #205A3B;
+}
+
+[data-testid="stCameraInput"] {
+    background: #FFFFFF;
+    padding: 10px;
+    border-radius: 12px;
+}
+
+[data-testid="stMetric"] {
+    background: #FFFFFF;
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid #D9D2BB;
+}
+
+[data-testid="stMetricLabel"] {
+    color: #173D2B !important;
     font-weight: 800;
 }
 
-.nota p {
-    color: #49380F !important;
+[data-testid="stMetricValue"] {
+    color: #205A3B !important;
+    font-weight: 900;
+}
+
+.stAlert {
+    color: #173D2B !important;
+}
+
+div[data-baseweb="select"] * {
+    color: #173D2B !important;
 }
 
 hr {
-    border-color: #D9B45B !important;
-}
-
-footer {
-    visibility: hidden;
+    border-color: #D7B45A;
 }
 </style>
 """, unsafe_allow_html=True)
 
-
-# =========================================================
-# FUNCIONES GENERALES
-# =========================================================
+# =====================================================
+# FUNCIONES DE IMAGEN
+# =====================================================
 
 def cargar_imagen(archivo):
     if archivo is None:
         return None
 
-    try:
-        imagen = Image.open(archivo)
-        imagen = ImageOps.exif_transpose(imagen)
-        return imagen.convert("RGB")
-    except Exception:
-        return None
+    imagen = Image.open(archivo)
+    imagen = ImageOps.exif_transpose(imagen)
+    return imagen.convert("RGB")
 
 
 def distancia(p1, p2):
@@ -287,753 +209,642 @@ def distancia(p1, p2):
     )
 
 
-# =========================================================
-# ANÁLISIS GEOMÉTRICO FACIAL
-# =========================================================
+def obtener_punto(landmarks, indice, ancho, alto):
+    punto = landmarks[indice]
+    return (
+        punto.x * ancho,
+        punto.y * alto
+    )
 
-def analizar_rostro(imagen_pil):
 
-    imagen = imagen_pil.convert("RGB")
-    ancho, alto = imagen.size
+# =====================================================
+# DETECCIÓN Y MEDICIÓN GEOMÉTRICA
+# =====================================================
 
-    imagen_array = np.asarray(imagen)
+def analizar_geometria(imagen):
+    mp_face_mesh = mp.solutions.face_mesh
 
-    try:
-        with mp.solutions.face_mesh.FaceMesh(
-            static_image_mode=True,
-            max_num_faces=1,
-            refine_landmarks=True,
-            min_detection_confidence=0.5
-        ) as detector:
+    imagen_rgb = np.array(imagen.convert("RGB"))
+    alto, ancho, _ = imagen_rgb.shape
 
-            resultado = detector.process(imagen_array)
+    with mp_face_mesh.FaceMesh(
+        static_image_mode=True,
+        max_num_faces=1,
+        refine_landmarks=True,
+        min_detection_confidence=0.5
+    ) as detector:
 
-    except Exception as error:
-        return None, None, str(error)
+        resultado = detector.process(imagen_rgb)
 
     if not resultado.multi_face_landmarks:
-        return None, None, None
+        return None, None, "No se detectó un rostro. Intenta usar una fotografía más clara y frontal."
 
-    puntos = resultado.multi_face_landmarks[0].landmark
+    landmarks = resultado.multi_face_landmarks[0].landmark
 
-    def punto(indice):
-        return (
-            puntos[indice].x * ancho,
-            puntos[indice].y * alto
-        )
+    # Puntos de referencia anatómica aproximada
+    frente = obtener_punto(landmarks, 10, ancho, alto)
+    menton = obtener_punto(landmarks, 152, ancho, alto)
+    lado_izquierdo = obtener_punto(landmarks, 234, ancho, alto)
+    lado_derecho = obtener_punto(landmarks, 454, ancho, alto)
 
-    # Puntos de referencia seleccionados
-    mejilla_izquierda = punto(234)
-    mejilla_derecha = punto(454)
+    ojo_izquierdo = obtener_punto(landmarks, 33, ancho, alto)
+    ojo_derecho = obtener_punto(landmarks, 263, ancho, alto)
 
-    frente = punto(10)
-    menton = punto(152)
+    boca_izquierda = obtener_punto(landmarks, 61, ancho, alto)
+    boca_derecha = obtener_punto(landmarks, 291, ancho, alto)
 
-    ojo_izquierdo = punto(33)
-    ojo_derecho = punto(263)
+    nariz_izquierda = obtener_punto(landmarks, 98, ancho, alto)
+    nariz_derecha = obtener_punto(landmarks, 327, ancho, alto)
 
-    boca_izquierda = punto(61)
-    boca_derecha = punto(291)
-
-    nariz_izquierda = punto(129)
-    nariz_derecha = punto(358)
-
-    centro_boca = punto(13)
-
-    # Dimensiones principales
-    ancho_facial = distancia(
-        mejilla_izquierda,
-        mejilla_derecha
+    centro_boca = (
+        (boca_izquierda[0] + boca_derecha[0]) / 2,
+        (boca_izquierda[1] + boca_derecha[1]) / 2
     )
 
-    alto_facial = distancia(
-        frente,
-        menton
-    )
+    ancho_rostro = distancia(lado_izquierdo, lado_derecho)
+    alto_rostro = distancia(frente, menton)
 
-    if ancho_facial < 1 or alto_facial < 1:
-        return None, None, None
+    if ancho_rostro <= 0 or alto_rostro <= 0:
+        return None, None, "No fue posible calcular las dimensiones del rostro."
 
     # Mediciones normalizadas
     medidas = {
-        "Proporción alto/ancho facial":
-            alto_facial / ancho_facial,
-
-        "Distancia entre ojos":
-            distancia(
-                ojo_izquierdo,
-                ojo_derecho
-            ) / ancho_facial,
-
-        "Ancho de la boca":
-            distancia(
-                boca_izquierda,
-                boca_derecha
-            ) / ancho_facial,
-
-        "Ancho de la nariz":
-            distancia(
-                nariz_izquierda,
-                nariz_derecha
-            ) / ancho_facial,
-
-        "Posición vertical de la boca":
-            abs(centro_boca[1] - frente[1]) / alto_facial
+        "Proporción alto/ancho": alto_rostro / ancho_rostro,
+        "Distancia entre ojos": distancia(
+            ojo_izquierdo, ojo_derecho
+        ) / ancho_rostro,
+        "Ancho de boca": distancia(
+            boca_izquierda, boca_derecha
+        ) / ancho_rostro,
+        "Ancho de nariz": distancia(
+            nariz_izquierda, nariz_derecha
+        ) / ancho_rostro,
+        "Posición vertical de boca": (
+            (centro_boca[1] - frente[1]) / alto_rostro
+        )
     }
 
-    # Dibujar referencias geométricas
-    dibujo = imagen.copy()
-    lienzo = ImageDraw.Draw(dibujo)
+    # Dibujar puntos y líneas de referencia
+    imagen_anotada = imagen.copy()
+    dibujo = ImageDraw.Draw(imagen_anotada)
 
-    puntos_dibujo = [
-        mejilla_izquierda,
-        mejilla_derecha,
-        frente,
-        menton,
-        ojo_izquierdo,
-        ojo_derecho,
-        boca_izquierda,
-        boca_derecha,
-        nariz_izquierda,
-        nariz_derecha
+    puntos = [
+        frente, menton, lado_izquierdo, lado_derecho,
+        ojo_izquierdo, ojo_derecho,
+        boca_izquierda, boca_derecha,
+        nariz_izquierda, nariz_derecha
     ]
 
     lineas = [
-        (mejilla_izquierda, mejilla_derecha),
         (frente, menton),
+        (lado_izquierdo, lado_derecho),
         (ojo_izquierdo, ojo_derecho),
         (boca_izquierda, boca_derecha),
         (nariz_izquierda, nariz_derecha)
     ]
 
-    for p1, p2 in lineas:
-        lienzo.line(
-            [p1, p2],
-            fill=(220, 160, 30),
-            width=max(2, int(ancho / 250))
+    for inicio, fin in lineas:
+        dibujo.line(
+            (inicio[0], inicio[1], fin[0], fin[1]),
+            fill="#E0A52B",
+            width=max(2, ancho // 300)
         )
 
-    radio = max(3, int(ancho / 100))
+    radio = max(3, ancho // 100)
 
-    for x, y in puntos_dibujo:
-        lienzo.ellipse(
-            [
-                (x-radio, y-radio),
-                (x+radio, y+radio)
-            ],
-            fill=(20, 160, 70),
-            outline=(255, 255, 255)
+    for x, y in puntos:
+        dibujo.ellipse(
+            (x-radio, y-radio, x+radio, y+radio),
+            fill="#D7A52C",
+            outline="#FFFFFF",
+            width=2
         )
 
-    return medidas, dibujo, None
+    return medidas, imagen_anotada, None
 
 
-# =========================================================
-# COMPARACIÓN DE MEDICIONES GEOMÉTRICAS
-# =========================================================
+# =====================================================
+# COMPARACIÓN DE MEDIDAS
+# =====================================================
 
-def comparar_medidas(medidas1, medidas2):
+def comparar_medidas(medidas_a, medidas_b):
+    filas = []
 
-    diferencias = {}
-    coincidencias = {}
+    coincidencias = []
+    diferencias = []
 
-    for nombre in medidas1:
+    for nombre in medidas_a:
+        valor_a = float(medidas_a[nombre])
+        valor_b = float(medidas_b[nombre])
 
-        valor1 = medidas1[nombre]
-        valor2 = medidas2[nombre]
+        denominador = max(
+            abs(valor_a),
+            abs(valor_b),
+            1e-9
+        )
 
-        mayor = max(abs(valor1), abs(valor2), 1e-9)
+        diferencia = abs(valor_a - valor_b) / denominador * 100
+        coincidencia = max(0, 100 - diferencia)
 
-        diferencia = abs(valor1 - valor2) / mayor * 100
+        coincidencias.append(coincidencia)
+        diferencias.append(diferencia)
 
-        diferencia = min(100, diferencia)
+        filas.append({
+            "Medición": nombre,
+            "Fotografía A": valor_a,
+            "Fotografía B": valor_b,
+            "Diferencia (%)": diferencia,
+            "Coincidencia geométrica (%)": coincidencia
+        })
 
-        coincidencia = 100 - diferencia
+    porcentaje = float(np.mean(coincidencias))
+    diferencia_media = float(np.mean(diferencias))
 
-        diferencias[nombre] = diferencia
-        coincidencias[nombre] = coincidencia
+    return pd.DataFrame(filas), porcentaje, diferencia_media
 
-    # Promedio de las coincidencias de las mediciones
-    porcentaje = float(
-        np.mean(list(coincidencias.values()))
-    )
-
-    diferencia_media = float(
-        np.mean(list(diferencias.values()))
-    )
-
-    return porcentaje, diferencia_media, diferencias, coincidencias
-
-
-# =========================================================
-# INTERPRETACIÓN DEL RESULTADO
-# =========================================================
 
 def interpretar_resultado(porcentaje):
-
-    if porcentaje >= 85:
-        return (
-            "COINCIDENCIA GEOMÉTRICA ALTA",
-            "Las proporciones geométricas medidas presentan "
-            "diferencias pequeñas."
+    if porcentaje >= 80:
+        categoria = "COINCIDENCIA GEOMÉTRICA ALTA"
+        explicacion = (
+            "Las medidas geométricas seleccionadas presentan "
+            "un nivel alto de concordancia numérica."
         )
-
-    elif porcentaje >= 70:
-        return (
-            "COINCIDENCIA GEOMÉTRICA MODERADA",
-            "Las mediciones presentan algunas diferencias."
+    elif porcentaje >= 60:
+        categoria = "COINCIDENCIA GEOMÉTRICA MEDIA"
+        explicacion = (
+            "Las medidas presentan una concordancia intermedia. "
+            "Se observan diferencias en algunos indicadores."
         )
-
-    elif porcentaje >= 50:
-        return (
-            "COINCIDENCIA GEOMÉTRICA INTERMEDIA",
-            "Se observan diferencias apreciables entre "
-            "las medidas analizadas."
-        )
-
     else:
-        return (
-            "COINCIDENCIA GEOMÉTRICA BAJA",
-            "Las mediciones presentan diferencias considerables."
+        categoria = "COINCIDENCIA GEOMÉTRICA BAJA"
+        explicacion = (
+            "Las medidas seleccionadas presentan diferencias "
+            "numéricas importantes entre las fotografías."
         )
 
+    return categoria, explicacion
 
-# =========================================================
-# CABECERA PRINCIPAL
-# =========================================================
+
+# =====================================================
+# ENCABEZADO
+# =====================================================
 
 st.markdown("""
 <div class="hero">
     <h1>CRISTOFHER AMAZON AI</h1>
-    <p>INTELIGENCIA ARTIFICIAL Y ANÁLISIS FACIAL</p>
-    <p>INNOVACIÓN TECNOLÓGICA DESDE LA AMAZONÍA</p>
+    <p>INTELIGENCIA ARTIFICIAL · ANÁLISIS VISUAL · AMAZONÍA</p>
 </div>
 """, unsafe_allow_html=True)
 
+# =====================================================
+# MENÚ LATERAL
+# =====================================================
 
-if PORTADA.exists():
-    imagen_portada = Image.open(PORTADA)
-    st.image(imagen_portada, use_container_width=True)
-else:
+with st.sidebar:
+    st.markdown("## 🌿 CRISTOFHER AMAZON AI")
+    st.markdown("---")
+
+    pagina = st.radio(
+        "MENÚ PRINCIPAL",
+        [
+            "Inicio",
+            "Comparación matemática",
+            "Galería amazónica",
+            "Información del proyecto"
+        ]
+    )
+
+    st.markdown("---")
+    st.caption("Análisis geométrico de imágenes faciales")
+
+
+# =====================================================
+# PÁGINA DE INICIO
+# =====================================================
+
+if pagina == "Inicio":
+
+    st.subheader("Bienvenido a CRISTOFHER AMAZON AI")
+
+    if PORTADA.exists():
+        st.image(
+            Image.open(PORTADA),
+            use_container_width=True
+        )
+    else:
+        st.markdown("""
+        <div class="panel" style="text-align:center;">
+            <h2>🌿 AMAZONÍA PERUANA 🌿</h2>
+            <p>
+            Tecnología, investigación y análisis visual
+            inspirados en la riqueza de la Amazonía.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
     st.markdown("""
-    <div style="
-        background:linear-gradient(120deg,#123D2B,#39734D);
-        border:3px solid #F2C968;
-        border-radius:18px;
-        padding:55px 20px;
-        text-align:center;">
-        <div style="font-size:65px;">🌿</div>
-        <h2 style="color:#F2C968 !important;">
-            BIENVENIDOS A LA AMAZONÍA
-        </h2>
-        <p style="color:white !important;">
-            Portada amazónica de CRISTOFHER AMAZON AI
+    <div class="panel">
+        <h3>¿Qué permite realizar esta aplicación?</h3>
+        <p>
+        Esta herramienta permite analizar dos fotografías y
+        calcular diferencias y coincidencias entre determinadas
+        proporciones geométricas faciales.
+        </p>
+        <p>
+        El sistema utiliza puntos de referencia para obtener
+        mediciones normalizadas y presentar sus resultados
+        mediante tablas, porcentajes y gráficos.
         </p>
     </div>
     """, unsafe_allow_html=True)
 
-
-st.markdown("""
-<div class="nota">
-    Plataforma experimental para el análisis geométrico
-    de las medidas faciales mediante métodos matemáticos.
-</div>
-""", unsafe_allow_html=True)
-
-st.divider()
+    if st.button("INICIAR ANÁLISIS", use_container_width=True):
+        st.session_state["ir_comparacion"] = True
+        st.rerun()
 
 
-# =========================================================
-# ÍNDICE LATERAL
-# =========================================================
+# =====================================================
+# PÁGINA DE COMPARACIÓN
+# =====================================================
 
-st.sidebar.markdown("# 🌿 CRISTOFHER AMAZON AI")
-st.sidebar.markdown("## ÍNDICE DE NAVEGACIÓN")
-st.sidebar.markdown("---")
+elif pagina == "Comparación matemática":
 
-seccion = st.sidebar.radio(
-    "SELECCIONA UNA SECCIÓN",
-    [
-        "Inicio",
-        "Comparación matemática",
-        "Galería amazónica",
-        "Información del proyecto"
-    ],
-    key="menu_principal"
-)
-
-st.sidebar.markdown("---")
-st.sidebar.markdown("### ANÁLISIS GEOMÉTRICO")
-st.sidebar.markdown(
-    "Tecnología desarrollada con Python y Streamlit."
-)
-
-
-# =========================================================
-# SECCIÓN INICIO
-# =========================================================
-
-if seccion == "Inicio":
-
-    st.title("BIENVENIDO A CRISTOFHER AMAZON AI")
-
-    st.write("""
-    Esta plataforma permite analizar las proporciones
-    geométricas observables de dos rostros mediante
-    puntos de referencia y procedimientos matemáticos.
-    """)
-
-    c1, c2, c3 = st.columns(3)
-
-    with c1:
-        st.markdown("""
-        <div class="panel">
-            <h3>📷 FOTOGRAFÍAS</h3>
-            <p>Carga imágenes desde tu dispositivo
-            o utiliza la cámara.</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with c2:
-        st.markdown("""
-        <div class="panel">
-            <h3>📐 MATEMÁTICAS</h3>
-            <p>Calcula distancias y proporciones
-            geométricas faciales.</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with c3:
-        st.markdown("""
-        <div class="panel">
-            <h3>📊 RESULTADOS</h3>
-            <p>Visualiza porcentajes, gráficos
-            e interpretaciones.</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-    st.info(
-        "Selecciona «Comparación matemática» "
-        "en el menú lateral para comenzar."
-    )
-
-
-# =========================================================
-# SECCIÓN COMPARACIÓN GEOMÉTRICA
-# =========================================================
-
-elif seccion == "Comparación matemática":
-
-    st.title("COMPARACIÓN MATEMÁTICA FACIAL")
-
-    st.write("""
-    Carga dos fotografías frontales para analizar
-    sus mediciones geométricas.
-    """)
+    st.subheader("📸 Comparación matemática de dos fotografías")
 
     st.markdown("""
     <div class="nota">
-        El porcentaje representa coincidencia entre las
-        mediciones geométricas observadas. No identifica
-        personas ni determina si dos fotografías pertenecen
-        a una misma persona.
+    <b>Instrucciones:</b> selecciona dos fotografías donde los
+    rostros se encuentren visibles. Puedes cargar imágenes desde
+    tu computadora o utilizar la cámara.
     </div>
     """, unsafe_allow_html=True)
 
-    izquierda, derecha = st.columns(2)
+    col1, col2 = st.columns(2)
 
-    img1 = None
-    img2 = None
-
-    with izquierda:
-
-        st.subheader("📸 PRIMER ROSTRO")
-
-        archivo1 = st.file_uploader(
-            "Cargar primera fotografía",
+    with col1:
+        st.markdown("### FOTOGRAFÍA A")
+        archivo_a = st.file_uploader(
+            "Subir fotografía A",
             type=["jpg", "jpeg", "png"],
-            key="imagen1"
+            key="foto_a"
+        )
+        camara_a = st.camera_input(
+            "Activar cámara A",
+            key="camara_a"
         )
 
-        camara1 = st.camera_input(
-            "Tomar primera fotografía",
-            key="camara1"
+    with col2:
+        st.markdown("### FOTOGRAFÍA B")
+        archivo_b = st.file_uploader(
+            "Subir fotografía B",
+            type=["jpg", "jpeg", "png"],
+            key="foto_b"
+        )
+        camara_b = st.camera_input(
+            "Activar cámara B",
+            key="camara_b"
         )
 
-        if camara1 is not None:
-            img1 = cargar_imagen(camara1)
-        elif archivo1 is not None:
-            img1 = cargar_imagen(archivo1)
+    imagen_a = cargar_imagen(
+        archivo_a if archivo_a is not None else camara_a
+    )
 
-        if img1 is not None:
+    imagen_b = cargar_imagen(
+        archivo_b if archivo_b is not None else camara_b
+    )
+
+    if imagen_a is not None and imagen_b is not None:
+
+        st.markdown("---")
+        st.markdown("### Fotografías seleccionadas")
+
+        vista_a, vista_b = st.columns(2)
+
+        with vista_a:
             st.image(
-                img1,
-                caption="PRIMERA FOTOGRAFÍA",
+                imagen_a,
+                caption="Fotografía A",
                 use_container_width=True
             )
-        else:
-            st.info("Selecciona o toma la primera fotografía.")
 
-    with derecha:
-
-        st.subheader("📸 SEGUNDO ROSTRO")
-
-        archivo2 = st.file_uploader(
-            "Cargar segunda fotografía",
-            type=["jpg", "jpeg", "png"],
-            key="imagen2"
-        )
-
-        camara2 = st.camera_input(
-            "Tomar segunda fotografía",
-            key="camara2"
-        )
-
-        if camara2 is not None:
-            img2 = cargar_imagen(camara2)
-        elif archivo2 is not None:
-            img2 = cargar_imagen(archivo2)
-
-        if img2 is not None:
+        with vista_b:
             st.image(
-                img2,
-                caption="SEGUNDA FOTOGRAFÍA",
+                imagen_b,
+                caption="Fotografía B",
                 use_container_width=True
             )
-        else:
-            st.info("Selecciona o toma la segunda fotografía.")
-
-    st.divider()
-
-    if img1 is not None and img2 is not None:
 
         if st.button(
-            "🔍 ANALIZAR MEDIDAS FACIALES",
+            "🔍 ANALIZAR MEDIDAS GEOMÉTRICAS",
             use_container_width=True
         ):
 
-            with st.spinner("Detectando puntos y calculando medidas..."):
+            with st.spinner("Analizando puntos y medidas..."):
 
-                medidas1, dibujo1, error1 = analizar_rostro(img1)
-                medidas2, dibujo2, error2 = analizar_rostro(img2)
-
-            if error1 or error2:
-                st.error(
-                    "Ocurrió un problema al procesar las fotografías. "
-                    "Intenta nuevamente con imágenes JPG o PNG."
+                medidas_a, anotada_a, error_a = analizar_geometria(
+                    imagen_a
                 )
 
-            elif medidas1 is None or medidas2 is None:
-
-                st.error(
-                    "No se pudo detectar un rostro en una de las "
-                    "fotografías. Utiliza imágenes frontales, claras "
-                    "y con el rostro visible."
+                medidas_b, anotada_b, error_b = analizar_geometria(
+                    imagen_b
                 )
+
+            if error_a or error_b:
+                if error_a:
+                    st.error("Fotografía A: " + error_a)
+                if error_b:
+                    st.error("Fotografía B: " + error_b)
 
             else:
 
-                porcentaje, diferencia_media, diferencias, coincidencias = (
-                    comparar_medidas(medidas1, medidas2)
+                tabla, porcentaje, diferencia_media = comparar_medidas(
+                    medidas_a,
+                    medidas_b
                 )
 
                 categoria, explicacion = interpretar_resultado(
                     porcentaje
                 )
 
-                st.success("ANÁLISIS GEOMÉTRICO COMPLETADO")
+                st.session_state["resultado_tabla"] = tabla
+                st.session_state["resultado_porcentaje"] = porcentaje
+                st.session_state["resultado_diferencia"] = diferencia_media
+                st.session_state["resultado_categoria"] = categoria
+                st.session_state["resultado_explicacion"] = explicacion
+                st.session_state["anotada_a"] = anotada_a
+                st.session_state["anotada_b"] = anotada_b
 
-                st.header("RESULTADO GENERAL")
+        # Mostrar resultados guardados
+        if "resultado_tabla" in st.session_state:
 
-                r1, r2 = st.columns(2)
+            tabla = st.session_state["resultado_tabla"]
+            porcentaje = st.session_state["resultado_porcentaje"]
+            diferencia_media = st.session_state["resultado_diferencia"]
+            categoria = st.session_state["resultado_categoria"]
+            explicacion = st.session_state["resultado_explicacion"]
 
-                with r1:
-                    st.markdown(f"""
-                    <div class="resultado">
-                        <div class="resultado-numero">
-                            {porcentaje:.1f}%
-                        </div>
-                        <div class="resultado-texto">
-                            COINCIDENCIA GEOMÉTRICA
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
+            st.markdown("---")
+            st.header("RESULTADO DE LA COMPARACIÓN")
 
-                with r2:
-                    st.markdown(f"""
-                    <div class="resultado">
-                        <div class="resultado-numero">
-                            {diferencia_media:.1f}%
-                        </div>
-                        <div class="resultado-texto">
-                            DIFERENCIA GEOMÉTRICA
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
+            r1, r2 = st.columns(2)
 
-                st.progress(
-                    int(round(porcentaje))
-                )
-
-                st.subheader(categoria)
-                st.write(explicacion)
-
-                st.caption(
-                    "Este porcentaje resume las diferencias entre "
-                    "las proporciones geométricas seleccionadas. "
-                    "No representa un porcentaje de parecido personal "
-                    "ni una probabilidad de identidad."
-                )
-
-                # ---------------------------------------------
-                # PUNTOS FACIALES
-                # ---------------------------------------------
-
-                st.divider()
-                st.header("PUNTOS DE REFERENCIA FACIAL")
-
-                g1, g2 = st.columns(2)
-
-                with g1:
-                    st.image(
-                        dibujo1,
-                        caption="Mediciones del primer rostro",
-                        use_container_width=True
-                    )
-
-                with g2:
-                    st.image(
-                        dibujo2,
-                        caption="Mediciones del segundo rostro",
-                        use_container_width=True
-                    )
-
-                # ---------------------------------------------
-                # TABLA DE MEDICIONES
-                # ---------------------------------------------
-
-                st.divider()
-                st.header("TABLA DE MEDICIONES GEOMÉTRICAS")
-
-                filas = []
-
-                for nombre in medidas1:
-
-                    filas.append({
-                        "Característica": nombre,
-                        "Rostro 1": round(medidas1[nombre], 4),
-                        "Rostro 2": round(medidas2[nombre], 4),
-                        "Diferencia (%)": round(
-                            diferencias[nombre], 2
-                        ),
-                        "Coincidencia (%)": round(
-                            coincidencias[nombre], 2
-                        )
-                    })
-
-                tabla = pd.DataFrame(filas)
-
-                st.dataframe(
-                    tabla,
-                    use_container_width=True,
-                    hide_index=True
-                )
-
-                # ---------------------------------------------
-                # GRÁFICO DE COINCIDENCIAS
-                # ---------------------------------------------
-
-                st.divider()
-                st.header("GRÁFICO DE COINCIDENCIA POR MEDICIÓN")
-
-                datos_grafico = pd.DataFrame({
-                    "Característica": list(coincidencias.keys()),
-                    "Coincidencia (%)": list(coincidencias.values())
-                })
-
-                st.bar_chart(
-                    datos_grafico,
-                    x="Característica",
-                    y="Coincidencia (%)",
-                    y_min=0,
-                    y_max=100,
-                    use_container_width=True
-                )
-
-                # ---------------------------------------------
-                # GRÁFICO DE DIFERENCIAS
-                # ---------------------------------------------
-
-                st.header("GRÁFICO DE DIFERENCIAS")
-
-                datos_diferencia = pd.DataFrame({
-                    "Característica": list(diferencias.keys()),
-                    "Diferencia (%)": list(diferencias.values())
-                })
-
-                st.bar_chart(
-                    datos_diferencia,
-                    x="Característica",
-                    y="Diferencia (%)",
-                    y_min=0,
-                    y_max=100,
-                    use_container_width=True
-                )
-
-                # ---------------------------------------------
-                # EXPLICACIÓN MATEMÁTICA
-                # ---------------------------------------------
-
-                st.divider()
-                st.header("MÉTODO MATEMÁTICO UTILIZADO")
-
-                st.write(
-                    "Primero se calcula la diferencia relativa "
-                    "de cada medición:"
-                )
-
-                st.latex(
-                    r"D_i = "
-                    r"\frac{|M_{1i}-M_{2i}|}"
-                    r"{\max(|M_{1i}|,|M_{2i}|)}"
-                    r"\times 100"
-                )
-
-                st.write(
-                    "Después se calcula la coincidencia descriptiva "
-                    "de cada medición:"
-                )
-
-                st.latex(
-                    r"C_i = 100-D_i"
-                )
-
-                st.write(
-                    "Finalmente, se obtiene el promedio de las "
-                    "coincidencias geométricas:"
-                )
-
-                st.latex(
-                    r"C_{\mathrm{promedio}}="
-                    r"\frac{\sum_{i=1}^{n} C_i}{n}"
-                )
-
+            with r1:
                 st.markdown(f"""
-                <div class="panel">
-                    <h3>INTERPRETACIÓN AUTOMÁTICA</h3>
-                    <p>{categoria}</p>
-                    <p>{explicacion}</p>
-                    <p>Coincidencia geométrica descriptiva:
-                    <b>{porcentaje:.2f}%</b>.</p>
-                    <p>Diferencia geométrica media:
-                    <b>{diferencia_media:.2f}%</b>.</p>
+                <div class="resultado">
+                    <div class="resultado-numero">
+                        {porcentaje:.1f}%
+                    </div>
+                    <div class="resultado-texto">
+                        COINCIDENCIA GEOMÉTRICA
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
 
-                st.info(
-                    "Las mediciones pueden variar por la posición "
-                    "del rostro, la expresión facial, la iluminación, "
-                    "la perspectiva y la calidad de la fotografía."
+            with r2:
+                st.markdown(f"""
+                <div class="resultado">
+                    <div class="resultado-numero">
+                        {diferencia_media:.1f}%
+                    </div>
+                    <div class="resultado-texto">
+                        DIFERENCIA GEOMÉTRICA
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+            st.progress(
+                int(round(porcentaje)),
+                text="Coincidencia entre las medidas seleccionadas"
+            )
+
+            st.markdown(f"""
+            <div class="panel" style="text-align:center;">
+                <h3>{categoria}</h3>
+                <p>{explicacion}</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            st.markdown("""
+            <div class="nota">
+            El porcentaje expresa la concordancia numérica entre
+            las medidas geométricas seleccionadas. No representa
+            identidad ni parecido personal entre individuos.
+            </div>
+            """, unsafe_allow_html=True)
+
+            st.markdown("---")
+            st.header("PUNTOS DE REFERENCIA DETECTADOS")
+
+            p1, p2 = st.columns(2)
+
+            with p1:
+                st.image(
+                    st.session_state["anotada_a"],
+                    caption="Mediciones de la fotografía A",
+                    use_container_width=True
                 )
 
-    else:
+            with p2:
+                st.image(
+                    st.session_state["anotada_b"],
+                    caption="Mediciones de la fotografía B",
+                    use_container_width=True
+                )
 
+            st.markdown("---")
+            st.header("TABLA DE RESULTADOS MATEMÁTICOS")
+
+            tabla_mostrar = tabla.copy()
+
+            columnas_redondeo = [
+                "Fotografía A",
+                "Fotografía B",
+                "Diferencia (%)",
+                "Coincidencia geométrica (%)"
+            ]
+
+            tabla_mostrar[columnas_redondeo] = (
+                tabla_mostrar[columnas_redondeo].round(4)
+            )
+
+            st.dataframe(
+                tabla_mostrar,
+                use_container_width=True,
+                hide_index=True
+            )
+
+            st.markdown("---")
+            st.header("GRÁFICO DE COINCIDENCIA POR MEDICIÓN")
+
+            grafico = tabla.set_index("Medición")[
+                ["Coincidencia geométrica (%)"]
+            ]
+
+            st.bar_chart(
+                grafico,
+                horizontal=True
+            )
+
+            st.header("INTERPRETACIÓN DE LOS RESULTADOS")
+
+            for _, fila in tabla.iterrows():
+
+                st.markdown(
+                    f"""
+                    <div class="panel">
+                        <b>{fila['Medición']}</b>
+                        <p>
+                        Fotografía A: {fila['Fotografía A']:.4f}
+                        </p>
+                        <p>
+                        Fotografía B: {fila['Fotografía B']:.4f}
+                        </p>
+                        <p>
+                        Diferencia: {fila['Diferencia (%)']:.2f}%
+                        </p>
+                        <p>
+                        Coincidencia geométrica:
+                        {fila['Coincidencia geométrica (%)']:.2f}%
+                        </p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+            st.markdown("---")
+            st.header("FUNDAMENTO MATEMÁTICO")
+
+            st.markdown("""
+            Para cada medida se calcula la diferencia relativa:
+
+            \[
+            D_i = \\frac{|A_i-B_i|}{\\max(|A_i|,|B_i|)}\\times100
+            \]
+
+            La coincidencia geométrica de cada medición se obtiene mediante:
+
+            \[
+            C_i = 100-D_i
+            \]
+
+            Finalmente, se calcula el promedio de las coincidencias:
+
+            \[
+            C_{promedio}=\\frac{C_1+C_2+\\cdots+C_n}{n}
+            \]
+
+            Donde:
+
+            - \(A_i\): medida normalizada de la fotografía A.
+            - \(B_i\): medida normalizada de la fotografía B.
+            - \(D_i\): diferencia relativa porcentual.
+            - \(C_i\): coincidencia geométrica de cada medición.
+            - \(n\): número de mediciones consideradas.
+            """)
+
+            csv = tabla.to_csv(index=False).encode("utf-8")
+
+            st.download_button(
+                "📥 DESCARGAR RESULTADOS EN CSV",
+                data=csv,
+                file_name="resultados_geometricos.csv",
+                mime="text/csv",
+                use_container_width=True
+            )
+
+    else:
         st.info(
-            "Selecciona las dos fotografías para habilitar "
-            "el análisis geométrico."
+            "Carga las dos fotografías o utiliza la cámara para comenzar."
         )
 
 
-# =========================================================
-# SECCIÓN GALERÍA
-# =========================================================
+# =====================================================
+# GALERÍA AMAZÓNICA
+# =====================================================
 
-elif seccion == "Galería amazónica":
+elif pagina == "Galería amazónica":
 
-    st.title("GALERÍA DOCUMENTAL AMAZÓNICA")
-
-    st.write("""
-    Espacio destinado a mostrar fotografías documentales
-    relacionadas con la diversidad cultural de la Amazonía.
-    """)
+    st.subheader("🌿 Galería amazónica")
 
     if GALERIA.exists():
-
-        galeria = Image.open(GALERIA)
-
         st.image(
-            galeria,
-            caption="Fotografías documentales de referencia",
+            Image.open(GALERIA),
+            caption="Material fotográfico de referencia visual",
             use_container_width=True
         )
-
     else:
+        st.markdown("""
+        <div class="panel">
+            <h3>Galería de fotografías</h3>
+            <p>
+            Para mostrar tu galería, agrega el archivo
+            rostros_referencia.png a la carpeta principal
+            del proyecto.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
 
-        st.info(
-            "Agrega el archivo rostros_referencia.png "
-            "a tu repositorio para mostrar la galería."
-        )
+    st.caption(
+        "La galería es únicamente ilustrativa y documental. "
+        "No se utiliza para clasificar personas."
+    )
+
+
+# =====================================================
+# INFORMACIÓN DEL PROYECTO
+# =====================================================
+
+elif pagina == "Información del proyecto":
+
+    st.subheader("Información del proyecto")
 
     st.markdown("""
-    <div class="nota">
-        Esta galería tiene una finalidad documental y cultural.
-        No se utiliza para identificar personas ni clasificarlas.
+    <div class="panel">
+        <h3>CRISTOFHER AMAZON AI</h3>
+
+        <p>
+        Proyecto de análisis visual mediante herramientas
+        de inteligencia artificial y procesamiento digital
+        de imágenes.
+        </p>
+
+        <h4>Objetivo</h4>
+
+        <p>
+        Obtener mediciones geométricas normalizadas de dos
+        fotografías y presentar sus diferencias y coincidencias
+        mediante procedimientos matemáticos.
+        </p>
+
+        <h4>Tecnologías utilizadas</h4>
+
+        <ul>
+            <li>Python.</li>
+            <li>Streamlit.</li>
+            <li>MediaPipe Face Mesh.</li>
+            <li>NumPy.</li>
+            <li>Pandas.</li>
+            <li>Pillow.</li>
+        </ul>
+
+        <h4>Consideración técnica</h4>
+
+        <p>
+        Los resultados dependen de la orientación, iluminación,
+        resolución, expresión y posición de cada rostro.
+        Las mediciones son descriptivas y no determinan
+        identidad ni parecido personal.
+        </p>
     </div>
     """, unsafe_allow_html=True)
-
-
-# =========================================================
-# SECCIÓN INFORMACIÓN
-# =========================================================
-
-elif seccion == "Información del proyecto":
-
-    st.title("INFORMACIÓN DEL PROYECTO")
-
-    st.markdown("""
-    ### CRISTOFHER AMAZON AI
-
-    **Descripción**
-
-    Plataforma experimental desarrollada con Python,
-    Streamlit y MediaPipe para analizar mediciones
-    geométricas observables del rostro.
-
-    **Tecnologías utilizadas**
-
-    - Python.
-    - Streamlit.
-    - NumPy.
-    - Pandas.
-    - Pillow.
-    - MediaPipe.
-
-    **Métodos matemáticos**
-
-    - Detección de puntos de referencia faciales.
-    - Distancias euclidianas.
-    - Normalización de proporciones.
-    - Cálculo de diferencias relativas.
-    - Promedio de coincidencias geométricas.
-    - Representación gráfica de resultados.
-
-    **Objetivo**
-
-    Presentar mediciones geométricas mediante ecuaciones,
-    porcentajes, gráficos e interpretaciones comprensibles.
-    """)
-
-
-# =========================================================
-# PIE DE PÁGINA
-# =========================================================
 
 st.markdown("---")
 
 st.markdown("""
-<div class="hero">
-    <h1>CRISTOFHER AMAZON AI</h1>
-    <p>INTELIGENCIA ARTIFICIAL · ANÁLISIS GEOMÉTRICO · AMAZONÍA</p>
+<div style="text-align:center; padding:15px;">
+    <p><b>CRISTOFHER AMAZON AI</b></p>
+    <p>INTELIGENCIA ARTIFICIAL · AMAZONÍA PERUANA</p>
 </div>
 """, unsafe_allow_html=True)
 
