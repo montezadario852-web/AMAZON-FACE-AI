@@ -2,14 +2,14 @@
 import streamlit as st
 import mediapipe as mp
 import numpy as np
-from PIL import Image, ImageOps, ImageDraw
+from PIL import Image, ImageOps
 from pathlib import Path
 from io import BytesIO
 import zipfile
 
-# =========================================================
+# =====================================================
 # CONFIGURACIÓN
-# =========================================================
+# =====================================================
 
 st.set_page_config(
     page_title="CRISTOFHER AMAZON AI",
@@ -20,10 +20,11 @@ st.set_page_config(
 
 CARPETA = Path(__file__).parent
 BASE_REFERENCIA = CARPETA / "rostros_referencia.png"
+IMAGEN_PORTADA = CARPETA / "portada_amazonia.jpg"
 
-# =========================================================
-# DISEÑO VISUAL
-# =========================================================
+# =====================================================
+# ESTILOS
+# =====================================================
 
 st.markdown("""
 <style>
@@ -34,7 +35,7 @@ html, body, [class*="css"] {
 }
 
 .stApp {
-    background: #f3f6f2;
+    background: #f2f6f2;
 }
 
 [data-testid="stSidebar"] {
@@ -46,12 +47,12 @@ html, body, [class*="css"] {
 }
 
 .hero {
-    background: linear-gradient(120deg, #103d2d, #205b40);
+    background: linear-gradient(120deg, #103d2d, #286044);
     padding: 28px;
     border-radius: 20px;
     color: white;
-    margin-bottom: 22px;
-    border: 1px solid #c8a75b;
+    margin-bottom: 20px;
+    border: 1px solid #c9a85d;
 }
 
 .hero-brand {
@@ -59,20 +60,19 @@ html, body, [class*="css"] {
     font-size: 17px;
     font-weight: 800;
     letter-spacing: 2px;
-    margin-bottom: 12px;
 }
 
 .hero h1 {
     color: white;
-    font-size: 31px;
+    font-size: 30px;
     font-weight: 800;
-    margin-bottom: 10px;
+    margin-top: 12px;
 }
 
 .hero p {
-    color: #e4eee7;
-    font-size: 14px;
+    color: #edf3ee;
     line-height: 1.7;
+    font-size: 14px;
 }
 
 .panel {
@@ -96,9 +96,57 @@ html, body, [class*="css"] {
     font-size: 12px;
 }
 
-h2, h3 {
-    color: #174b35;
+/* OPCIONES DE CÁMARA Y FOTOGRAFÍA */
+
+[data-testid="stRadio"] label {
+    color: #174b35 !important;
+    font-weight: 700 !important;
 }
+
+[data-testid="stRadio"] p {
+    color: #174b35 !important;
+    font-weight: 700 !important;
+}
+
+[data-testid="stCameraInput"] {
+    background: #103d2d !important;
+    padding: 18px !important;
+    border-radius: 15px !important;
+    border: 2px solid #c9a85d !important;
+}
+
+[data-testid="stCameraInput"] label,
+[data-testid="stCameraInput"] p {
+    color: white !important;
+    font-weight: 700 !important;
+}
+
+[data-testid="stCameraInput"] button {
+    background: #e3bd62 !important;
+    color: #103d2d !important;
+    border: none !important;
+    font-weight: 800 !important;
+    border-radius: 10px !important;
+}
+
+[data-testid="stCameraInput"] button p {
+    color: #103d2d !important;
+}
+
+[data-testid="stFileUploader"] {
+    background: #ffffff;
+    border: 2px dashed #8ba994;
+    border-radius: 14px;
+    padding: 12px;
+}
+
+[data-testid="stFileUploader"] label,
+[data-testid="stFileUploader"] p {
+    color: #174b35 !important;
+    font-weight: 600 !important;
+}
+
+/* IMÁGENES SIN DISTORSIÓN */
 
 [data-testid="stImage"] img {
     object-fit: contain !important;
@@ -108,13 +156,16 @@ h2, h3 {
     border-radius: 12px;
 }
 
+h2, h3 {
+    color: #174b35;
+}
+
 .stButton button {
     background: #174b35;
     color: white;
     border-radius: 10px;
     border: none;
     font-weight: 700;
-    padding: 10px 18px;
 }
 
 .stButton button:hover {
@@ -126,9 +177,9 @@ h2, h3 {
 """, unsafe_allow_html=True)
 
 
-# =========================================================
-# FUNCIONES DE IMÁGENES
-# =========================================================
+# =====================================================
+# FUNCIONES
+# =====================================================
 
 def abrir_imagen(archivo):
     imagen = Image.open(archivo)
@@ -139,7 +190,6 @@ def abrir_imagen(archivo):
 def detectar_rostros(imagen):
     mp_face = mp.solutions.face_detection
     imagen_np = np.array(imagen)
-
     recortes = []
 
     with mp_face.FaceDetection(
@@ -169,27 +219,17 @@ def detectar_rostros(imagen):
                 y2 = min(alto, y2 + margen_y)
 
                 if x2 > x1 and y2 > y1:
-                    recorte = imagen.crop((x1, y1, x2, y2))
-                    recortes.append(recorte)
+                    recortes.append(imagen.crop((x1, y1, x2, y2)))
 
     return recortes
-
-
-def cargar_base():
-    if BASE_REFERENCIA.exists():
-        imagen = abrir_imagen(BASE_REFERENCIA)
-        rostros = detectar_rostros(imagen)
-        return imagen, rostros
-
-    return None, []
 
 
 def interpretar_deteccion(cantidad):
     if cantidad == 0:
         return (
             "No se detectaron rostros.",
-            "Intenta utilizar una fotografía más clara, "
-            "con el rostro visible y sin obstrucciones."
+            "Intenta con una fotografía más clara, "
+            "con el rostro visible y bien iluminado."
         )
 
     if cantidad == 1:
@@ -201,8 +241,8 @@ def interpretar_deteccion(cantidad):
 
     return (
         f"{cantidad} rostros detectados.",
-        "El sistema identificó varios rostros en la fotografía "
-        "y generó sus respectivos recortes."
+        "El sistema encontró varios rostros y generó "
+        "sus respectivos recortes fotográficos."
     )
 
 
@@ -222,11 +262,12 @@ def crear_zip(imagenes):
     return memoria
 
 
-# =========================================================
-# ENCABEZADO
-# =========================================================
+# =====================================================
+# ENCABEZADO CON IMAGEN INDEPENDIENTE
+# =====================================================
 
 def encabezado():
+
     st.markdown("""
     <div class="hero">
         <div class="hero-brand">🌿 CRISTOFHER AMAZON AI</div>
@@ -240,23 +281,24 @@ def encabezado():
     </div>
     """, unsafe_allow_html=True)
 
-    if BASE_REFERENCIA.exists():
-        portada = abrir_imagen(BASE_REFERENCIA)
+    if IMAGEN_PORTADA.exists():
+        portada = abrir_imagen(IMAGEN_PORTADA)
+
         st.image(
             portada,
-            caption="Colección fotográfica documental de referencia",
+            caption="Retrato documental de la Amazonía",
             use_container_width=True
         )
     else:
-        st.info(
-            "Agrega el archivo rostros_referencia.png al repositorio "
-            "para mostrar la colección documental en la portada."
+        st.warning(
+            "Falta agregar portada_amazonia.jpg al repositorio "
+            "para mostrar la fotografía de presentación."
         )
 
 
-# =========================================================
+# =====================================================
 # MENÚ LATERAL
-# =========================================================
+# =====================================================
 
 st.sidebar.markdown("""
 <h2 style="color:#e8cc82 !important;">
@@ -281,9 +323,9 @@ st.sidebar.markdown("---")
 st.sidebar.caption("Plataforma académica de análisis fotográfico")
 
 
-# =========================================================
-# PÁGINA DE INICIO
-# =========================================================
+# =====================================================
+# INICIO
+# =====================================================
 
 if pagina == "Inicio":
 
@@ -298,7 +340,7 @@ if pagina == "Inicio":
         <div class="panel">
         <h3>📤 Subir fotografía</h3>
         Selecciona una imagen desde tu dispositivo
-        para procesarla automáticamente.
+        para realizar el procesamiento automático.
         </div>
         """, unsafe_allow_html=True)
 
@@ -306,8 +348,8 @@ if pagina == "Inicio":
         st.markdown("""
         <div class="panel">
         <h3>📷 Activar cámara</h3>
-        Captura una fotografía directamente
-        desde la cámara de tu dispositivo.
+        Utiliza la cámara para capturar
+        una fotografía directamente.
         </div>
         """, unsafe_allow_html=True)
 
@@ -326,23 +368,20 @@ if pagina == "Inicio":
         st.markdown("""
         <div class="panel">
         <h3>🖼️ Base fotográfica</h3>
-        Visualización de la colección
-        documental de referencia.
+        Visualiza la colección documental
+        de fotografías de referencia.
         </div>
         """, unsafe_allow_html=True)
 
-    st.markdown("""
-    <div class="small-note">
-    Las fotografías documentales se presentan para consulta
-    y visualización. La aplicación no determina identidad,
-    pertenencia étnica ni origen de las personas.
-    </div>
-    """, unsafe_allow_html=True)
+    st.info(
+        "Para comenzar, ingresa a Identificación de rostro "
+        "en el menú lateral."
+    )
 
 
-# =========================================================
-# IDENTIFICACIÓN Y DETECCIÓN
-# =========================================================
+# =====================================================
+# IDENTIFICACIÓN DE ROSTRO
+# =====================================================
 
 elif pagina == "Identificación de rostro":
 
@@ -352,28 +391,56 @@ elif pagina == "Identificación de rostro":
 
     st.markdown("""
     <div class="panel">
-    Sube una fotografía o utiliza la cámara.
-    El sistema detectará automáticamente los rostros
-    que aparezcan en la imagen.
+    Selecciona una de las siguientes opciones para ingresar
+    tu fotografía y comenzar la detección automática.
     </div>
     """, unsafe_allow_html=True)
 
     opcion = st.radio(
-        "Selecciona el método de ingreso:",
-        ["Subir fotografía", "Tomar fotografía con cámara"],
+        "¿Cómo deseas ingresar la fotografía?",
+        [
+            "📁 SUBIR FOTOGRAFÍA",
+            "📷 ACTIVAR CÁMARA"
+        ],
         horizontal=True
     )
 
     archivo = None
 
-    if opcion == "Subir fotografía":
+    if opcion == "📁 SUBIR FOTOGRAFÍA":
+
+        st.markdown("### Seleccionar imagen")
+
         archivo = st.file_uploader(
-            "Selecciona una imagen",
-            type=["jpg", "jpeg", "png"]
+            "Busca una fotografía en tu dispositivo",
+            type=["jpg", "jpeg", "png"],
+            key="subir_fotografia"
         )
 
     else:
-        archivo = st.camera_input("Tomar fotografía")
+
+        st.markdown("""
+        <div style="
+        background:#103d2d;
+        color:white;
+        padding:18px;
+        border-radius:14px;
+        border:2px solid #c9a85d;
+        margin-bottom:12px;">
+        <h3 style="color:#e8cc82;">
+        📷 CÁMARA ACTIVADA
+        </h3>
+        <p style="color:white;">
+        Permite el acceso a la cámara de tu dispositivo.
+        Luego utiliza el botón de captura para tomar la fotografía.
+        </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        archivo = st.camera_input(
+            "ACTIVAR CÁMARA Y TOMAR FOTOGRAFÍA",
+            key="camara_fotografia"
+        )
 
     if archivo is not None:
 
@@ -422,6 +489,7 @@ elif pagina == "Identificación de rostro":
         )
 
         if rostros:
+
             st.markdown("### Rostros encontrados")
 
             columnas = st.columns(min(3, cantidad))
@@ -444,15 +512,14 @@ elif pagina == "Identificación de rostro":
             )
 
         st.caption(
-            "La detección indica la localización de rostros; "
-            "no constituye una identificación personal ni "
-            "una medición de semejanza étnica."
+            "La detección indica la localización de rostros. "
+            "No identifica personas ni determina pertenencia étnica."
         )
 
 
-# =========================================================
-# BASE FOTOGRÁFICA DOCUMENTAL
-# =========================================================
+# =====================================================
+# BASE FOTOGRÁFICA
+# =====================================================
 
 elif pagina == "Base fotográfica":
 
@@ -460,26 +527,28 @@ elif pagina == "Base fotográfica":
 
     st.markdown("## Base de fotografías de referencia")
 
-    imagen_base, rostros_base = cargar_base()
+    if BASE_REFERENCIA.exists():
 
-    if imagen_base is not None:
+        imagen_base = abrir_imagen(BASE_REFERENCIA)
 
         st.markdown("### Colección documental")
 
         st.image(
             imagen_base,
-            caption="Imagen original de la colección",
+            caption="Fotografía original de la colección",
             use_container_width=True
         )
 
-        st.markdown("### Rostros detectados en la colección")
+        with st.spinner("Detectando rostros de la colección..."):
+            rostros_base = detectar_rostros(imagen_base)
 
         if rostros_base:
 
             st.success(
-                f"Se detectaron {len(rostros_base)} rostros "
-                "en la fotografía de referencia."
+                f"Se detectaron {len(rostros_base)} rostros."
             )
+
+            st.markdown("### Rostros encontrados")
 
             columnas = st.columns(3)
 
@@ -502,28 +571,25 @@ elif pagina == "Base fotográfica":
 
         else:
             st.warning(
-                "No se detectaron rostros. Prueba con una imagen "
-                "de mayor resolución o con rostros más visibles."
+                "No se detectaron rostros en la fotografía. "
+                "Prueba con una imagen de mayor resolución."
             )
 
     else:
         st.warning(
-            "No se encontró rostros_referencia.png. "
-            "Agrega ese archivo a la carpeta principal del repositorio."
+            "No se encontró rostros_referencia.png "
+            "en la carpeta principal del proyecto."
         )
 
-    st.markdown("""
-    <div class="small-note">
-    Esta colección tiene carácter documental y de consulta.
-    Sus imágenes no se utilizan para clasificar el origen
-    étnico de las personas.
-    </div>
-    """, unsafe_allow_html=True)
+    st.caption(
+        "Las fotografías se conservan como colección documental "
+        "y no se utilizan para clasificar el origen étnico."
+    )
 
 
-# =========================================================
+# =====================================================
 # ACERCA DEL PROYECTO
-# =========================================================
+# =====================================================
 
 elif pagina == "Acerca del proyecto":
 
@@ -552,16 +618,15 @@ elif pagina == "Acerca del proyecto":
 
     <h3>Alcance y limitaciones</h3>
 
-    La aplicación no identifica personas, no determina
-    pertenencia étnica y no establece el origen de quienes
-    aparecen en las fotografías.
+    La aplicación no identifica personas ni determina
+    pertenencia étnica u origen.
     </div>
     """, unsafe_allow_html=True)
 
 
-# =========================================================
+# =====================================================
 # PIE DE PÁGINA
-# =========================================================
+# =====================================================
 
 st.markdown("---")
 
@@ -575,6 +640,7 @@ padding:12px;">
 Procesamiento digital de imágenes y detección de rostros
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
