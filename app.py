@@ -2,12 +2,14 @@
 import streamlit as st
 import mediapipe as mp
 import numpy as np
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, ImageDraw
 from pathlib import Path
+from io import BytesIO
+import zipfile
 
-# =====================================================
-# CONFIGURACIÓN GENERAL
-# =====================================================
+# =========================================================
+# CONFIGURACIÓN
+# =========================================================
 
 st.set_page_config(
     page_title="CRISTOFHER AMAZON AI",
@@ -16,116 +18,86 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# =====================================================
+CARPETA = Path(__file__).parent
+BASE_REFERENCIA = CARPETA / "rostros_referencia.png"
+
+# =========================================================
 # DISEÑO VISUAL
-# =====================================================
+# =========================================================
 
 st.markdown("""
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+
+html, body, [class*="css"] {
+    font-family: 'Montserrat', sans-serif;
+}
 
 .stApp {
-    background:
-        radial-gradient(circle at 90% 0%, #244b35 0%, transparent 35%),
-        linear-gradient(135deg, #08170f, #10291c, #173b28);
-    color: #f5f5ef;
+    background: #f3f6f2;
 }
 
 [data-testid="stSidebar"] {
-    background: #09180f;
-    border-right: 1px solid #c7a65e;
+    background: #103d2d;
 }
 
 [data-testid="stSidebar"] * {
-    color: #f5f5ef;
-}
-
-h1, h2, h3 {
-    color: #dfc17b !important;
-}
-
-p {
-    color: #eeeeea;
-}
-
-.block-container {
-    max-width: 1250px;
-    padding-top: 2rem;
-    padding-bottom: 3rem;
+    color: white !important;
 }
 
 .hero {
-    background: linear-gradient(120deg, #10291c, #28543a);
-    border: 1px solid #c7a65e;
-    border-radius: 22px;
-    padding: 35px;
-    margin-bottom: 28px;
-    box-shadow: 0 12px 30px rgba(0,0,0,.22);
-}
-
-.brand {
-    color: #e1c27a;
-    font-size: 17px;
-    font-weight: 900;
-    letter-spacing: 3px;
-}
-
-.hero-title {
+    background: linear-gradient(120deg, #103d2d, #205b40);
+    padding: 28px;
+    border-radius: 20px;
     color: white;
-    font-size: clamp(28px, 4vw, 43px);
-    font-weight: 900;
-    margin-top: 14px;
-    line-height: 1.15;
+    margin-bottom: 22px;
+    border: 1px solid #c8a75b;
 }
 
-.hero-description {
-    color: #e8eee7;
-    font-size: 16px;
-    margin-top: 12px;
-    max-width: 800px;
-    line-height: 1.6;
+.hero-brand {
+    color: #e8cc82;
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+}
+
+.hero h1 {
+    color: white;
+    font-size: 31px;
+    font-weight: 800;
+    margin-bottom: 10px;
+}
+
+.hero p {
+    color: #e4eee7;
+    font-size: 14px;
+    line-height: 1.7;
 }
 
 .panel {
-    background: linear-gradient(145deg, #193b29, #10291c);
-    border: 1px solid #45684d;
-    border-radius: 17px;
-    padding: 22px;
-    margin-bottom: 18px;
+    background: white;
+    border: 1px solid #dce5dc;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
 }
 
-.result-card {
-    background: linear-gradient(145deg, #193b29, #10291c);
-    border: 1px solid #c7a65e;
-    border-radius: 20px;
-    padding: 28px;
-    text-align: center;
+.resultado {
+    background: #e9f3eb;
+    border-left: 5px solid #25834b;
+    border-radius: 12px;
+    padding: 18px;
+    margin-top: 12px;
 }
 
-.result-title {
-    color: #dfc17b;
-    font-size: 24px;
-    font-weight: 900;
+.small-note {
+    color: #637267;
+    font-size: 12px;
 }
 
-.result-description {
-    color: #f5f5ef;
-    font-size: 16px;
-    line-height: 1.7;
-    margin-top: 15px;
-}
-
-div.stButton > button {
-    background: linear-gradient(90deg, #d9b66f, #f0d99b);
-    color: #10251b;
-    border: none;
-    border-radius: 11px;
-    font-weight: 900;
-    min-height: 45px;
-}
-
-div.stButton > button:hover {
-    background: #ffffff;
-    color: #10251b;
+h2, h3 {
+    color: #174b35;
 }
 
 [data-testid="stImage"] img {
@@ -136,550 +108,474 @@ div.stButton > button:hover {
     border-radius: 12px;
 }
 
-[data-testid="stFileUploader"] {
-    background: #193b29;
-    border: 1px dashed #c7a65e;
-    border-radius: 14px;
-    padding: 12px;
+.stButton button {
+    background: #174b35;
+    color: white;
+    border-radius: 10px;
+    border: none;
+    font-weight: 700;
+    padding: 10px 18px;
 }
 
-[data-testid="stCameraInput"] {
-    background: #193b29;
-    border-radius: 14px;
-    padding: 12px;
-}
-
-hr {
-    border-color: #45684d;
-}
-
-.footer {
-    color: #c8c8bd;
-    font-size: 12px;
-    text-align: center;
-    padding: 20px;
+.stButton button:hover {
+    background: #286746;
+    color: white;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
 
-# =====================================================
-# FUNCIONES DE IMAGEN
-# =====================================================
+# =========================================================
+# FUNCIONES DE IMÁGENES
+# =========================================================
 
 def abrir_imagen(archivo):
     imagen = Image.open(archivo)
     imagen = ImageOps.exif_transpose(imagen)
-    imagen = imagen.convert("RGB")
-    return np.array(imagen)
+    return imagen.convert("RGB")
 
 
 def detectar_rostros(imagen):
+    mp_face = mp.solutions.face_detection
+    imagen_np = np.array(imagen)
 
     recortes = []
-    coordenadas = []
 
-    with mp.solutions.face_detection.FaceDetection(
+    with mp_face.FaceDetection(
         model_selection=1,
         min_detection_confidence=0.50
     ) as detector:
 
-        resultado = detector.process(imagen)
+        resultado = detector.process(imagen_np)
 
         if resultado.detections:
-
-            alto, ancho, _ = imagen.shape
+            ancho, alto = imagen.size
 
             for deteccion in resultado.detections:
-
                 caja = deteccion.location_data.relative_bounding_box
 
                 x1 = max(0, int(caja.xmin * ancho))
                 y1 = max(0, int(caja.ymin * alto))
+                x2 = min(ancho, int((caja.xmin + caja.width) * ancho))
+                y2 = min(alto, int((caja.ymin + caja.height) * alto))
 
-                x2 = min(
-                    ancho,
-                    int((caja.xmin + caja.width) * ancho)
-                )
-
-                y2 = min(
-                    alto,
-                    int((caja.ymin + caja.height) * alto)
-                )
-
-                # Margen alrededor del rostro
-                margen_x = int((x2 - x1) * 0.12)
-                margen_y = int((y2 - y1) * 0.12)
+                margen_x = int((x2 - x1) * 0.15)
+                margen_y = int((y2 - y1) * 0.15)
 
                 x1 = max(0, x1 - margen_x)
                 y1 = max(0, y1 - margen_y)
                 x2 = min(ancho, x2 + margen_x)
                 y2 = min(alto, y2 + margen_y)
 
-                recorte = imagen[y1:y2, x1:x2]
-
-                if recorte.size > 0:
+                if x2 > x1 and y2 > y1:
+                    recorte = imagen.crop((x1, y1, x2, y2))
                     recortes.append(recorte)
-                    coordenadas.append((x1, y1, x2, y2))
 
-    return recortes, coordenadas
+    return recortes
 
 
-def interpretar_deteccion(numero):
+def cargar_base():
+    if BASE_REFERENCIA.exists():
+        imagen = abrir_imagen(BASE_REFERENCIA)
+        rostros = detectar_rostros(imagen)
+        return imagen, rostros
 
-    if numero == 0:
+    return None, []
+
+
+def interpretar_deteccion(cantidad):
+    if cantidad == 0:
         return (
-            "No se identificaron rostros en la fotografía. "
-            "Intenta utilizar una imagen frontal, nítida "
-            "y con iluminación adecuada."
+            "No se detectaron rostros.",
+            "Intenta utilizar una fotografía más clara, "
+            "con el rostro visible y sin obstrucciones."
         )
 
-    elif numero == 1:
+    if cantidad == 1:
         return (
-            "Se detectó un rostro en la fotografía. "
-            "El sistema completó el procesamiento de la imagen "
-            "y generó el recorte correspondiente."
+            "Un rostro detectado.",
+            "El sistema identificó un rostro en la fotografía "
+            "y completó el procesamiento automático."
         )
 
-    else:
-        return (
-            f"Se detectaron {numero} rostros en la fotografía. "
-            "El sistema procesó cada rostro por separado."
-        )
-
-
-# =====================================================
-# BASE FOTOGRÁFICA
-# =====================================================
-
-RUTA_BASE = Path("rostros_referencia.png")
-
-imagen_referencia = None
-rostros_referencia = []
-
-if RUTA_BASE.exists():
-
-    imagen_referencia = abrir_imagen(RUTA_BASE)
-
-    rostros_referencia, _ = detectar_rostros(
-        imagen_referencia
+    return (
+        f"{cantidad} rostros detectados.",
+        "El sistema identificó varios rostros en la fotografía "
+        "y generó sus respectivos recortes."
     )
 
 
-# =====================================================
-# ENCABEZADO PRINCIPAL
-# =====================================================
+def crear_zip(imagenes):
+    memoria = BytesIO()
 
-st.markdown("""
-<div class="hero">
+    with zipfile.ZipFile(memoria, "w") as archivo_zip:
+        for i, imagen in enumerate(imagenes, start=1):
+            buffer = BytesIO()
+            imagen.save(buffer, format="PNG")
+            archivo_zip.writestr(
+                f"rostro_{i}.png",
+                buffer.getvalue()
+            )
 
-    <div class="brand">
-        🌿 CRISTOFHER AMAZON AI
-    </div>
+    memoria.seek(0)
+    return memoria
 
-    <div class="hero-title">
-        IDENTIFICACIÓN DE ROSTRO
-    </div>
 
-    <div class="hero-description">
-        Plataforma académica de procesamiento digital
+# =========================================================
+# ENCABEZADO
+# =========================================================
+
+def encabezado():
+    st.markdown("""
+    <div class="hero">
+        <div class="hero-brand">🌿 CRISTOFHER AMAZON AI</div>
+        <h1>ANÁLISIS Y COMPARACIÓN FOTOGRÁFICA</h1>
+        <p>
+        Inteligencia artificial aplicada al procesamiento digital
         de imágenes y detección automática de rostros.
-        Una herramienta para explorar fotografías y
-        organizar una colección documental de referencia.
+        Una herramienta académica para explorar y organizar
+        fotografías documentales.
+        </p>
     </div>
+    """, unsafe_allow_html=True)
 
-</div>
-""", unsafe_allow_html=True)
+    if BASE_REFERENCIA.exists():
+        portada = abrir_imagen(BASE_REFERENCIA)
+        st.image(
+            portada,
+            caption="Colección fotográfica documental de referencia",
+            use_container_width=True
+        )
+    else:
+        st.info(
+            "Agrega el archivo rostros_referencia.png al repositorio "
+            "para mostrar la colección documental en la portada."
+        )
 
 
-# =====================================================
+# =========================================================
 # MENÚ LATERAL
-# =====================================================
+# =========================================================
 
 st.sidebar.markdown("""
-<div style="text-align:center;padding:15px 5px;">
-    <div style="font-size:35px;">🌿</div>
-    <div style="color:#dfc17b;font-size:18px;font-weight:900;">
-        CRISTOFHER
-    </div>
-    <div style="color:white;font-size:13px;letter-spacing:2px;">
-        AMAZON AI
-    </div>
-</div>
+<h2 style="color:#e8cc82 !important;">
+🌿 CRISTOFHER AMAZON AI
+</h2>
+<p style="font-size:12px;">
+Procesamiento digital de imágenes
+</p>
 """, unsafe_allow_html=True)
-
-st.sidebar.markdown("---")
 
 pagina = st.sidebar.radio(
     "MENÚ PRINCIPAL",
     [
         "Inicio",
         "Identificación de rostro",
-        "Base de fotografías",
+        "Base fotográfica",
         "Acerca del proyecto"
     ]
 )
 
 st.sidebar.markdown("---")
-
-st.sidebar.caption(
-    "Sistema académico de procesamiento de imágenes"
-)
+st.sidebar.caption("Plataforma académica de análisis fotográfico")
 
 
-# =====================================================
+# =========================================================
 # PÁGINA DE INICIO
-# =====================================================
+# =========================================================
 
 if pagina == "Inicio":
 
-    st.subheader("Bienvenido a nuestra plataforma")
+    encabezado()
 
-    st.write(
-        "Explora las herramientas de procesamiento facial "
-        "y la colección fotográfica documental del proyecto."
-    )
+    st.markdown("## Explora las herramientas de la plataforma")
 
-    if imagen_referencia is not None:
+    c1, c2 = st.columns(2)
 
-        st.markdown(
-            '<div class="panel"><h3>Base fotográfica de referencia</h3></div>',
-            unsafe_allow_html=True
-        )
+    with c1:
+        st.markdown("""
+        <div class="panel">
+        <h3>📤 Subir fotografía</h3>
+        Selecciona una imagen desde tu dispositivo
+        para procesarla automáticamente.
+        </div>
+        """, unsafe_allow_html=True)
 
-        st.image(
-            imagen_referencia,
-            use_container_width=True,
-            caption="Imagen original de referencia"
-        )
+    with c2:
+        st.markdown("""
+        <div class="panel">
+        <h3>📷 Activar cámara</h3>
+        Captura una fotografía directamente
+        desde la cámara de tu dispositivo.
+        </div>
+        """, unsafe_allow_html=True)
 
-        col1, col2, col3 = st.columns(3)
+    c3, c4 = st.columns(2)
 
-        with col1:
-            st.markdown(
-                f"""
-                <div class="panel">
-                    <h3>{len(rostros_referencia)}</h3>
-                    <p>Rostros detectados en la referencia</p>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+    with c3:
+        st.markdown("""
+        <div class="panel">
+        <h3>🔎 Detectar rostros</h3>
+        Localización automática y recorte
+        de los rostros encontrados.
+        </div>
+        """, unsafe_allow_html=True)
 
-        with col2:
-            st.markdown(
-                """
-                <div class="panel">
-                    <h3>Automático</h3>
-                    <p>Procesamiento de fotografías</p>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-        with col3:
-            st.markdown(
-                """
-                <div class="panel">
-                    <h3>Visual</h3>
-                    <p>Organización de imágenes</p>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-    else:
-
-        st.warning(
-            "No se encontró rostros_referencia.png. "
-            "Verifica que esté en la carpeta principal del repositorio."
-        )
+    with c4:
+        st.markdown("""
+        <div class="panel">
+        <h3>🖼️ Base fotográfica</h3>
+        Visualización de la colección
+        documental de referencia.
+        </div>
+        """, unsafe_allow_html=True)
 
     st.markdown("""
-    <div class="panel">
-        <h3>¿Qué permite realizar esta aplicación?</h3>
-        <p>
-        • Cargar fotografías desde un dispositivo.<br>
-        • Utilizar la cámara.<br>
-        • Detectar rostros automáticamente.<br>
-        • Recortar rostros de imágenes de referencia.<br>
-        • Visualizar los resultados del procesamiento.
-        </p>
+    <div class="small-note">
+    Las fotografías documentales se presentan para consulta
+    y visualización. La aplicación no determina identidad,
+    pertenencia étnica ni origen de las personas.
     </div>
     """, unsafe_allow_html=True)
 
 
-# =====================================================
-# IDENTIFICACIÓN DE ROSTRO
-# =====================================================
+# =========================================================
+# IDENTIFICACIÓN Y DETECCIÓN
+# =========================================================
 
 elif pagina == "Identificación de rostro":
 
-    st.subheader("Procesamiento de fotografía")
+    encabezado()
 
-    st.write(
-        "Selecciona una fotografía o utiliza la cámara "
-        "para detectar los rostros presentes en la imagen."
-    )
-
-    col1, col2 = st.columns(2, gap="large")
-
-    with col1:
-
-        st.markdown("""
-        <div class="panel">
-            <h3>📁 Subir fotografía</h3>
-            <p>Selecciona una imagen desde tu dispositivo.</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-        archivo = st.file_uploader(
-            "Seleccionar imagen",
-            type=["jpg", "jpeg", "png"],
-            key="archivo_usuario"
-        )
-
-    with col2:
-
-        st.markdown("""
-        <div class="panel">
-            <h3>📷 Activar cámara</h3>
-            <p>Captura una fotografía directamente.</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-        captura = st.camera_input(
-            "Tomar fotografía",
-            key="camara_usuario"
-        )
-
-    imagen_usuario = None
-
-    if archivo is not None:
-        imagen_usuario = abrir_imagen(archivo)
-
-    elif captura is not None:
-        imagen_usuario = abrir_imagen(captura)
-
-    if imagen_usuario is not None:
-
-        st.markdown("---")
-        st.subheader("Vista previa")
-
-        st.image(
-            imagen_usuario,
-            caption="Fotografía seleccionada",
-            use_container_width=True
-        )
-
-        if st.button(
-            "INICIAR DETECCIÓN DE ROSTRO",
-            use_container_width=True
-        ):
-
-            with st.spinner("Procesando imagen..."):
-
-                rostros_usuario, cajas = detectar_rostros(
-                    imagen_usuario
-                )
-
-            numero = len(rostros_usuario)
-
-            st.markdown("---")
-            st.subheader("Resultado del procesamiento")
-
-            if numero == 0:
-
-                st.error(interpretar_deteccion(0))
-
-            else:
-
-                st.success(
-                    f"Procesamiento completado: "
-                    f"{numero} rostro(s) detectado(s)."
-                )
-
-                st.markdown(
-                    f"""
-                    <div class="result-card">
-                        <div class="result-title">
-                            ROSTRO DETECTADO
-                        </div>
-                        <div style="
-                            color:#dfc17b;
-                            font-size:48px;
-                            font-weight:900;
-                            margin:10px;
-                        ">
-                            {numero}
-                        </div>
-                        <div class="result-description">
-                            {interpretar_deteccion(numero)}
-                        </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-
-                st.markdown("---")
-                st.subheader("Fotografías procesadas")
-
-                columnas = st.columns(3, gap="large")
-
-                for i, rostro in enumerate(rostros_usuario):
-
-                    with columnas[i % 3]:
-
-                        st.image(
-                            rostro,
-                            caption=f"Rostro detectado {i + 1}",
-                            use_container_width=True
-                        )
-
-                st.info(
-                    "La detección identifica la presencia y ubicación "
-                    "de rostros. No determina identidad ni pertenencia "
-                    "a un grupo étnico."
-                )
-
-    else:
-
-        st.markdown("""
-        <div class="panel">
-            <h3>Comienza tu procesamiento</h3>
-            <p>
-            Sube una fotografía o utiliza la cámara.
-            La aplicación detectará los rostros y mostrará
-            sus recortes sin deformar las imágenes.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-
-
-# =====================================================
-# BASE DE FOTOGRAFÍAS
-# =====================================================
-
-elif pagina == "Base de fotografías":
-
-    st.subheader("Base fotográfica de referencia")
-
-    st.write(
-        "Esta sección permite visualizar la fotografía original "
-        "y revisar los rostros detectados automáticamente."
-    )
-
-    if imagen_referencia is None:
-
-        st.error(
-            "No se encontró rostros_referencia.png. "
-            "Verifica el archivo en GitHub."
-        )
-
-    else:
-
-        st.markdown("### Imagen original")
-
-        st.image(
-            imagen_referencia,
-            use_container_width=True,
-            caption="Colección fotográfica original"
-        )
-
-        st.markdown("---")
-
-        st.subheader("Rostros detectados")
-
-        if not rostros_referencia:
-
-            st.warning(
-                "No se detectaron rostros. "
-                "Es posible que la imagen tenga rostros pequeños "
-                "o una resolución insuficiente."
-            )
-
-        else:
-
-            st.success(
-                f"Se detectaron {len(rostros_referencia)} rostros."
-            )
-
-            columnas = st.columns(3, gap="large")
-
-            for i, rostro in enumerate(rostros_referencia):
-
-                with columnas[i % 3]:
-
-                    st.image(
-                        rostro,
-                        caption=f"Imagen de referencia {i + 1}",
-                        use_container_width=True
-                    )
-
-
-# =====================================================
-# ACERCA DEL PROYECTO
-# =====================================================
-
-elif pagina == "Acerca del proyecto":
-
-    st.subheader("Acerca de CRISTOFHER AMAZON AI")
+    st.markdown("## Procesamiento de fotografía")
 
     st.markdown("""
     <div class="panel">
+    Sube una fotografía o utiliza la cámara.
+    El sistema detectará automáticamente los rostros
+    que aparezcan en la imagen.
+    </div>
+    """, unsafe_allow_html=True)
 
-        <h3>Descripción</h3>
+    opcion = st.radio(
+        "Selecciona el método de ingreso:",
+        ["Subir fotografía", "Tomar fotografía con cámara"],
+        horizontal=True
+    )
 
-        <p>
-        CRISTOFHER AMAZON AI es una aplicación académica
-        desarrollada para el procesamiento digital de imágenes
-        y la detección automática de rostros.
-        </p>
+    archivo = None
 
-        <h3>Base documental</h3>
+    if opcion == "Subir fotografía":
+        archivo = st.file_uploader(
+            "Selecciona una imagen",
+            type=["jpg", "jpeg", "png"]
+        )
 
-        <p>
-        El proyecto cuenta con una colección documental de
-        fotografías de referencia relacionadas con imágenes
-        de personas de los pueblos originarios Awajún y Wampis.
-        </p>
+    else:
+        archivo = st.camera_input("Tomar fotografía")
 
-        <h3>Funciones principales</h3>
+    if archivo is not None:
 
-        <p>
-        • Carga de fotografías.<br>
-        • Captura mediante cámara.<br>
-        • Detección automática de rostros.<br>
-        • Recorte de rostros de referencia.<br>
-        • Organización y visualización de imágenes.
-        </p>
+        imagen = abrir_imagen(archivo)
 
-        <h3>Consideración metodológica</h3>
+        st.markdown("### Fotografía seleccionada")
 
-        <p>
-        La detección facial permite localizar rostros en imágenes.
-        No determina identidad, origen étnico ni pertenencia
-        a una comunidad.
-        </p>
+        st.image(
+            imagen,
+            caption="Imagen original",
+            use_container_width=True
+        )
 
+        with st.spinner("Procesando imagen y detectando rostros..."):
+            rostros = detectar_rostros(imagen)
+
+        cantidad = len(rostros)
+        titulo, interpretacion = interpretar_deteccion(cantidad)
+
+        st.markdown("## Resultado del procesamiento")
+
+        a, b = st.columns(2)
+
+        with a:
+            st.metric("Rostros detectados", cantidad)
+
+        with b:
+            st.metric(
+                "Estado del procesamiento",
+                "Completado" if cantidad > 0 else "Sin detección"
+            )
+
+        if cantidad > 0:
+            st.success(titulo)
+        else:
+            st.warning(titulo)
+
+        st.markdown(
+            f"""
+            <div class="resultado">
+            <h3>Interpretación del resultado</h3>
+            <p>{interpretacion}</p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        if rostros:
+            st.markdown("### Rostros encontrados")
+
+            columnas = st.columns(min(3, cantidad))
+
+            for i, rostro in enumerate(rostros):
+                with columnas[i % len(columnas)]:
+                    st.image(
+                        rostro,
+                        caption=f"Rostro detectado {i + 1}",
+                        use_container_width=True
+                    )
+
+            archivo_zip = crear_zip(rostros)
+
+            st.download_button(
+                "📥 Descargar rostros detectados",
+                data=archivo_zip,
+                file_name="rostros_detectados.zip",
+                mime="application/zip"
+            )
+
+        st.caption(
+            "La detección indica la localización de rostros; "
+            "no constituye una identificación personal ni "
+            "una medición de semejanza étnica."
+        )
+
+
+# =========================================================
+# BASE FOTOGRÁFICA DOCUMENTAL
+# =========================================================
+
+elif pagina == "Base fotográfica":
+
+    encabezado()
+
+    st.markdown("## Base de fotografías de referencia")
+
+    imagen_base, rostros_base = cargar_base()
+
+    if imagen_base is not None:
+
+        st.markdown("### Colección documental")
+
+        st.image(
+            imagen_base,
+            caption="Imagen original de la colección",
+            use_container_width=True
+        )
+
+        st.markdown("### Rostros detectados en la colección")
+
+        if rostros_base:
+
+            st.success(
+                f"Se detectaron {len(rostros_base)} rostros "
+                "en la fotografía de referencia."
+            )
+
+            columnas = st.columns(3)
+
+            for i, rostro in enumerate(rostros_base):
+                with columnas[i % 3]:
+                    st.image(
+                        rostro,
+                        caption=f"Referencia {i + 1}",
+                        use_container_width=True
+                    )
+
+            archivo_zip = crear_zip(rostros_base)
+
+            st.download_button(
+                "📥 Descargar recortes de referencia",
+                data=archivo_zip,
+                file_name="rostros_referencia.zip",
+                mime="application/zip"
+            )
+
+        else:
+            st.warning(
+                "No se detectaron rostros. Prueba con una imagen "
+                "de mayor resolución o con rostros más visibles."
+            )
+
+    else:
+        st.warning(
+            "No se encontró rostros_referencia.png. "
+            "Agrega ese archivo a la carpeta principal del repositorio."
+        )
+
+    st.markdown("""
+    <div class="small-note">
+    Esta colección tiene carácter documental y de consulta.
+    Sus imágenes no se utilizan para clasificar el origen
+    étnico de las personas.
     </div>
     """, unsafe_allow_html=True)
 
 
-# =====================================================
+# =========================================================
+# ACERCA DEL PROYECTO
+# =========================================================
+
+elif pagina == "Acerca del proyecto":
+
+    encabezado()
+
+    st.markdown("## Acerca de la plataforma")
+
+    st.markdown("""
+    <div class="panel">
+    <h3>CRISTOFHER AMAZON AI</h3>
+
+    Es una plataforma académica orientada al procesamiento
+    digital de imágenes mediante herramientas de inteligencia
+    artificial.
+
+    Su función principal es detectar rostros en fotografías,
+    generar recortes automáticos y facilitar la organización
+    de colecciones fotográficas documentales.
+
+    <h3>Objetivos</h3>
+
+    - Explorar técnicas de procesamiento digital de imágenes.
+    - Detectar rostros automáticamente.
+    - Organizar fotografías de referencia.
+    - Facilitar la visualización de resultados.
+
+    <h3>Alcance y limitaciones</h3>
+
+    La aplicación no identifica personas, no determina
+    pertenencia étnica y no establece el origen de quienes
+    aparecen en las fotografías.
+    </div>
+    """, unsafe_allow_html=True)
+
+
+# =========================================================
 # PIE DE PÁGINA
-# =====================================================
+# =========================================================
 
 st.markdown("---")
 
 st.markdown("""
-<div class="footer">
-    🌿 CRISTOFHER AMAZON AI<br>
-    Plataforma académica de procesamiento de imágenes<br>
-    © 2026
+<div style="
+text-align:center;
+color:#64756a;
+font-size:12px;
+padding:12px;">
+🌿 CRISTOFHER AMAZON AI<br>
+Procesamiento digital de imágenes y detección de rostros
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
