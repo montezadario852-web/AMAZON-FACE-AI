@@ -6,89 +6,94 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 from PIL import Image
-from pathlib import Path
 
-# --------------------------------------------------
-# CONFIGURACIÓN
-# --------------------------------------------------
+# ==========================================
+# CONFIGURACION
+# ==========================================
+
 st.set_page_config(
-    page_title="AMAZON FACE AI",
+    page_title="CRISTOFHER AMAZON AI",
     page_icon="🌿",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide"
 )
 
-# --------------------------------------------------
-# ESTILO VISUAL: AMAZONÍA PERUANA
-# --------------------------------------------------
+# ==========================================
+# DISENO AMAZONIA PERUANA
+# ==========================================
+
 st.markdown("""
 <style>
 .stApp {
     background:
-      radial-gradient(circle at 85% 8%, #245b42 0%, transparent 28%),
-      linear-gradient(135deg, #071b14, #102d20 55%, #071811);
-    color: #f5f2e8;
+      radial-gradient(circle at 85% 5%, #285b3e, transparent 32%),
+      linear-gradient(135deg,#06180f,#123c29,#071a12);
+    color: #f5f0df;
 }
 [data-testid="stSidebar"] {
-    background: linear-gradient(180deg,#06170f,#123b29);
-    border-right: 1px solid #bd9b4b;
+    background: linear-gradient(180deg,#06170f,#16452e);
+    border-right: 1px solid #d2ad59;
 }
-h1,h2,h3 { color: #f0d28a !important; }
-p, label, span { color: #f1eee4; }
+h1,h2,h3 {
+    color: #e8cb82 !important;
+}
+p,label {
+    color: #f5f0df;
+}
 .hero {
-    padding: 28px;
-    border: 1px solid #b99549;
+    background: linear-gradient(120deg,#16452e,#092117);
+    border: 1px solid #d2ad59;
     border-radius: 22px;
-    background: linear-gradient(120deg,#123b29,#0a2118);
-    box-shadow: 0 12px 35px #0006;
+    padding: 30px;
+    box-shadow: 0 12px 35px #0007;
 }
 .hero-title {
-    font-size: 42px;
+    color: #f0d58e;
+    font-size: 38px;
     font-weight: 900;
-    color: #f1d58e;
-    letter-spacing: 2px;
 }
-.hero-subtitle {
-    font-size: 18px;
-    color: #f6f0df;
+.hero-icons {
+    font-size: 35px;
+    letter-spacing: 7px;
 }
 .panel {
+    background: #102b1e;
+    border: 1px solid #927c49;
+    border-radius: 16px;
     padding: 20px;
-    border: 1px solid #8c7946;
-    border-radius: 17px;
-    background: #10291f;
-    margin-bottom: 14px;
-}
-.small-note {
-    color: #c8d7c9;
-    font-size: 13px;
 }
 div.stButton > button {
-    background: linear-gradient(90deg,#c49b45,#e5c879);
+    background: linear-gradient(90deg,#c49b45,#e8ce83);
     color: #142318;
-    border: 0;
+    border: none;
     border-radius: 12px;
     font-weight: bold;
+    min-height: 44px;
 }
 [data-testid="stMetric"] {
     background: #123526;
-    border: 1px solid #927a42;
+    border: 1px solid #927c49;
     border-radius: 14px;
     padding: 14px;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# --------------------------------------------------
-# FUNCIONES DE ANÁLISIS
-# --------------------------------------------------
+
+# ==========================================
+# DETECCION Y MEDICION FACIAL
+# ==========================================
+
 mp_face_mesh = mp.solutions.face_mesh
+mp_drawing = mp.solutions.drawing_utils
 
-def distancia(p1, p2):
-    return float(np.linalg.norm(np.array(p1) - np.array(p2)))
 
-def analizar_fotografia(imagen_pil):
-    imagen = np.array(imagen_pil.convert("RGB"))
+def distancia(a, b):
+    return float(np.linalg.norm(np.array(a) - np.array(b)))
+
+
+def analizar_fotografia(foto):
+
+    imagen = np.array(foto.convert("RGB"))
     alto, ancho = imagen.shape[:2]
 
     with mp_face_mesh.FaceMesh(
@@ -97,278 +102,403 @@ def analizar_fotografia(imagen_pil):
         refine_landmarks=True,
         min_detection_confidence=0.5
     ) as detector:
+
         resultado = detector.process(imagen)
 
     if not resultado.multi_face_landmarks:
-        return None, None, None
+        return None
 
-    puntos = resultado.multi_face_landmarks[0].landmark
+    rostro = resultado.multi_face_landmarks[0]
+    puntos = rostro.landmark
 
-    def punto(indice):
-        return (puntos[indice].x * ancho,
-                puntos[indice].y * alto)
+    def punto(i):
+        return (
+            puntos[i].x * ancho,
+            puntos[i].y * alto
+        )
 
-    # Medidas geométricas normalizadas
     ancho_rostro = distancia(punto(234), punto(454))
     alto_rostro = distancia(punto(10), punto(152))
 
-    if ancho_rostro <= 0:
-        return None, None, None
+    if ancho_rostro <= 0 or alto_rostro <= 0:
+        return None
 
     medidas = {
-        "Distancia entre ojos": distancia(punto(33), punto(263)) / ancho_rostro,
-        "Ancho de nariz": distancia(punto(98), punto(327)) / ancho_rostro,
-        "Ancho de boca": distancia(punto(61), punto(291)) / ancho_rostro,
-        "Relación altura/ancho": alto_rostro / ancho_rostro
+        "Distancia entre ojos":
+            distancia(punto(33), punto(263)) / ancho_rostro,
+        "Ancho de nariz":
+            distancia(punto(98), punto(327)) / ancho_rostro,
+        "Ancho de boca":
+            distancia(punto(61), punto(291)) / ancho_rostro,
+        "Relacion altura/ancho":
+            alto_rostro / ancho_rostro
     }
 
-    # Dibujar malla y puntos detectados
-    imagen_malla = imagen.copy()
+    # Dibujar malla facial
+    anotada = imagen.copy()
 
-    conexiones = [
-        (33, 263), (234, 454), (10, 152),
-        (98, 327), (61, 291), (33, 234),
-        (263, 454), (10, 33), (10, 263)
-    ]
-
-    for a, b in conexiones:
-        pa = tuple(np.round(punto(a)).astype(int))
-        pb = tuple(np.round(punto(b)).astype(int))
-        cv2.line(imagen_malla, pa, pb, (218, 181, 91), 2)
-
-    for indice in [10, 33, 61, 98, 152, 234, 263, 291, 327, 454]:
-        px_, py_ = np.round(punto(indice)).astype(int)
-        cv2.circle(imagen_malla, (px_, py_), 5, (60, 230, 150), -1)
-
-    # Indicador técnico orientativo de calidad de captura
-    gris = cv2.cvtColor(imagen, cv2.COLOR_RGB2GRAY)
-    brillo = float(np.mean(gris))
-    nitidez = float(cv2.Laplacian(gris, cv2.CV_64F).var())
-    proporcion_rostro = ancho_rostro / ancho
-
-    puntaje_brillo = np.clip(100 - abs(brillo - 130) * 0.7, 0, 100)
-    puntaje_nitidez = np.clip(nitidez / 150 * 100, 0, 100)
-    puntaje_tamano = np.clip(proporcion_rostro / 0.45 * 100, 0, 100)
-
-    calidad = round(
-        0.35 * puntaje_brillo
-        + 0.35 * puntaje_nitidez
-        + 0.30 * puntaje_tamano
+    mp_drawing.draw_landmarks(
+        image=anotada,
+        landmark_list=rostro,
+        connections=mp_face_mesh.FACEMESH_TESSELATION,
+        landmark_drawing_spec=None,
+        connection_drawing_spec=mp_drawing.DrawingSpec(
+            color=(80, 210, 145),
+            thickness=1,
+            circle_radius=1
+        )
     )
 
-    return imagen_malla, medidas, calidad
+    # Calidad tecnica de la fotografia
+    gris = cv2.cvtColor(imagen, cv2.COLOR_RGB2GRAY)
 
-# --------------------------------------------------
-# MENÚ LATERAL
-# --------------------------------------------------
-st.sidebar.markdown("## 🌿 AMAZON FACE AI")
-st.sidebar.caption("Tecnología y análisis geométrico facial")
+    brillo = float(np.mean(gris))
+    nitidez = float(
+        cv2.Laplacian(gris, cv2.CV_64F).var()
+    )
+
+    xs = np.array([p.x for p in puntos])
+    proporcion = float(xs.max() - xs.min())
+
+    calidad_brillo = np.clip(
+        100 - abs(brillo - 127) * 0.9, 0, 100
+    )
+
+    calidad_nitidez = np.clip(
+        nitidez / 150 * 100, 0, 100
+    )
+
+    calidad_tamano = np.clip(
+        proporcion / 0.45 * 100, 0, 100
+    )
+
+    calidad = round(
+        0.35 * calidad_brillo
+        + 0.40 * calidad_nitidez
+        + 0.25 * calidad_tamano
+    )
+
+    return {
+        "imagen": anotada,
+        "medidas": medidas,
+        "calidad": calidad,
+        "brillo": round(brillo, 2),
+        "nitidez": round(nitidez, 2),
+        "tamano": round(proporcion * 100, 2)
+    }
+
+
+# ==========================================
+# MENU
+# ==========================================
+
+st.sidebar.markdown(
+    "<h2 style='color:#e8cb82'>🌿 CRISTOFHER AMAZON AI</h2>",
+    unsafe_allow_html=True
+)
+
+st.sidebar.caption(
+    "Inteligencia artificial y geometria facial"
+)
+
 pagina = st.sidebar.radio(
-    "NAVEGACIÓN",
-    ["Inicio", "Análisis facial", "Acerca del proyecto"]
+    "MENU PRINCIPAL",
+    ["Inicio", "Analisis facial", "Acerca del proyecto"],
+    key="pagina"
 )
 
 st.sidebar.markdown("---")
-st.sidebar.markdown("🌳 **Amazonía peruana**")
-st.sidebar.caption("Naturaleza · Ciencia · Tecnología")
+st.sidebar.markdown("### 🌳 Amazonia peruana")
+st.sidebar.caption("Naturaleza · Ciencia · Tecnologia")
 
-# --------------------------------------------------
-# PORTADA
-# --------------------------------------------------
+
+# ==========================================
+# INICIO
+# ==========================================
+
 if pagina == "Inicio":
+
     st.markdown("""
     <div class="hero">
-      <div class="hero-title">🌿 AMAZON FACE AI</div>
-      <div class="hero-subtitle">
-        Geometría facial e inteligencia artificial
-      </div>
-      <p>Una herramienta experimental para visualizar
-      características geométricas del rostro mediante visión
-      computacional.</p>
-      <div style="font-size:35px;">🌳 🦜 🍃 🌊 🌴</div>
-      <p style="color:#e5c879;font-weight:bold;">
-        TECNOLOGÍA AL SERVICIO DE NUESTRA AMAZONÍA
-      </p>
+        <div class="hero-icons">🌿 🌳 🦜 🌊 🌴</div>
+        <div class="hero-title">CRISTOFHER AMAZON AI</div>
+        <h3>Geometria facial e inteligencia artificial</h3>
+        <p>
+        Una herramienta experimental que utiliza vision
+        computacional para detectar puntos faciales,
+        calcular proporciones y visualizar resultados.
+        </p>
+        <p style="color:#e8cb82;font-weight:bold;">
+        TECNOLOGIA INSPIRADA EN LA AMAZONIA PERUANA
+        </p>
     </div>
     """, unsafe_allow_html=True)
 
     st.write("")
+
     c1, c2 = st.columns(2)
 
     with c1:
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
-        st.subheader("📷 Análisis facial")
-        st.write("Carga una fotografía o utiliza la cámara para detectar puntos y medidas geométricas.")
-        st.button(
-            "Ir al análisis facial",
-            on_click=lambda: st.session_state.update(
-                {"ir_analisis": True}
+        with st.container(border=True):
+            st.subheader("📷 Analisis facial")
+            st.write(
+                "Sube una fotografia o utiliza la camara "
+                "para detectar puntos faciales."
             )
-        )
-        st.markdown('</div>', unsafe_allow_html=True)
+            st.button(
+                "COMENZAR ANALISIS",
+                use_container_width=True,
+                on_click=lambda: st.session_state.update(
+                    {"pagina": "Analisis facial"}
+                )
+            )
 
     with c2:
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
-        st.subheader("📊 Resultados visuales")
-        st.write("Visualiza las medidas detectadas, los gráficos y la calidad de la fotografía.")
-        st.markdown("**Análisis individual de cada imagen.**")
-        st.markdown('</div>', unsafe_allow_html=True)
+        with st.container(border=True):
+            st.subheader("📊 Resultados")
+            st.write(
+                "Visualiza las medidas, los graficos "
+                "y la calidad tecnica de cada fotografia."
+            )
+            st.write("Cada imagen se procesa individualmente.")
+
+    st.markdown("### 🌱 Nuestra inspiracion")
+
+    st.write(
+        "La biodiversidad, los paisajes, los rios y "
+        "la vegetacion de la Amazonia peruana inspiran "
+        "la identidad visual de esta aplicacion."
+    )
 
     st.info(
-        "Esta aplicación analiza geometría facial. "
-        "No determina identidad, origen étnico ni pertenencia "
-        "a pueblos indígenas."
+        "El analisis es geometrico y experimental. "
+        "No identifica personas ni determina origen etnico."
     )
 
-# --------------------------------------------------
-# ANÁLISIS FACIAL
-# --------------------------------------------------
-elif pagina == "Análisis facial":
-    st.title("📷 Análisis geométrico facial")
+
+# ==========================================
+# ANALISIS FACIAL
+# ==========================================
+
+elif pagina == "Analisis facial":
+
+    st.title("📷 Analisis geometrico facial")
+
     st.write(
-        "Selecciona una fotografía o toma una imagen con tu cámara."
+        "Selecciona una fotografia o activa la camara."
     )
 
-    col1, col2 = st.columns(2)
+    c1, c2 = st.columns(2)
 
-    with col1:
+    with c1:
         archivo = st.file_uploader(
-            "Subir fotografía",
+            "SUBIR FOTOGRAFIA",
             type=["jpg", "jpeg", "png"]
         )
 
-    with col2:
-        camara = st.camera_input("Activar cámara")
+    with c2:
+        camara = st.camera_input("ACTIVAR CAMARA")
 
-    imagen_seleccionada = camara if camara is not None else archivo
+    foto = camara if camara is not None else archivo
 
-    if imagen_seleccionada is not None:
-        imagen = Image.open(imagen_seleccionada).convert("RGB")
+    if foto is not None:
 
-        st.markdown("### Fotografía seleccionada")
-        st.image(imagen, use_container_width=True)
+        imagen = Image.open(foto).convert("RGB")
 
-        if st.button("🔍 ANALIZAR FOTOGRAFÍA", use_container_width=True):
-            with st.spinner("Detectando puntos faciales..."):
-                imagen_malla, medidas, calidad = analizar_fotografia(imagen)
+        st.image(
+            imagen,
+            caption="Fotografia seleccionada",
+            use_container_width=True
+        )
 
-            if imagen_malla is None:
-                st.error(
-                    "No se detectó un rostro con suficiente claridad. "
-                    "Prueba con una fotografía frontal, iluminada y nítida."
+        if st.button(
+            "🔍 ANALIZAR FOTOGRAFIA",
+            use_container_width=True
+        ):
+
+            with st.spinner("Procesando fotografia..."):
+                st.session_state["resultado"] = (
+                    analizar_fotografia(imagen)
+                )
+
+        resultado = st.session_state.get("resultado")
+
+        if resultado is None and "resultado" in st.session_state:
+            st.error(
+                "No se detecto un rostro. "
+                "Prueba con una fotografia frontal y bien iluminada."
+            )
+
+        elif resultado is not None:
+
+            st.success("Analisis completado.")
+
+            st.markdown("## 🧭 Malla facial detectada")
+
+            st.image(
+                resultado["imagen"],
+                caption="Puntos y conexiones geometricas",
+                use_container_width=True
+            )
+
+            st.markdown("## 📊 Indicadores")
+
+            calidad = resultado["calidad"]
+
+            a, b, c = st.columns(3)
+
+            a.metric("Calidad de captura", f"{calidad}%")
+            b.metric("Medidas calculadas", len(resultado["medidas"]))
+            c.metric("Nitidez", resultado["nitidez"])
+
+            st.progress(calidad / 100)
+
+            st.caption(
+                "Este porcentaje representa calidad tecnica "
+                "de captura, no semejanza entre personas."
+            )
+
+            st.markdown("## 📐 Medidas geometricas")
+
+            datos = pd.DataFrame({
+                "Caracteristica": list(resultado["medidas"].keys()),
+                "Valor normalizado": list(resultado["medidas"].values())
+            })
+
+            grafico = px.bar(
+                datos,
+                x="Caracteristica",
+                y="Valor normalizado",
+                color="Valor normalizado",
+                color_continuous_scale=["#286747", "#d9b65e"],
+                title="Proporciones geometricas detectadas"
+            )
+
+            grafico.update_layout(
+                paper_bgcolor="#102b1e",
+                plot_bgcolor="#102b1e",
+                font_color="#f5f0df",
+                coloraxis_showscale=False
+            )
+
+            st.plotly_chart(
+                grafico,
+                use_container_width=True
+            )
+
+            st.dataframe(
+                datos,
+                use_container_width=True,
+                hide_index=True
+            )
+
+            st.markdown("## 📝 Interpretacion")
+
+            if calidad >= 75:
+                st.success(
+                    "La fotografia presenta condiciones tecnicas "
+                    "favorables para la deteccion y medicion."
+                )
+            elif calidad >= 50:
+                st.warning(
+                    "La calidad es intermedia. Se recomienda "
+                    "mejorar iluminacion y enfoque."
                 )
             else:
-                st.success("Se detectó un rostro y se calcularon sus medidas.")
-
-                st.markdown("## 🧭 Visualización geométrica")
-                st.image(
-                    imagen_malla,
-                    caption="Puntos y líneas geométricas detectadas",
-                    use_container_width=True
+                st.error(
+                    "La calidad es baja. Se recomienda tomar "
+                    "otra fotografia."
                 )
 
-                st.markdown("## 📐 Medidas calculadas")
+            detalles = pd.DataFrame({
+                "Indicador": [
+                    "Brillo promedio",
+                    "Nitidez",
+                    "Tamano relativo del rostro"
+                ],
+                "Valor": [
+                    resultado["brillo"],
+                    resultado["nitidez"],
+                    f'{resultado["tamano"]}%'
+                ]
+            })
 
-                datos = pd.DataFrame({
-                    "Característica": list(medidas.keys()),
-                    "Valor normalizado": list(medidas.values())
-                })
+            st.markdown("### Detalles tecnicos")
+            st.dataframe(
+                detalles,
+                use_container_width=True,
+                hide_index=True
+            )
 
-                c1, c2 = st.columns(2)
-                with c1:
-                    st.metric("Calidad técnica de captura", f"{calidad}%")
-                with c2:
-                    st.metric("Características calculadas", len(medidas))
-
-                grafico = px.bar(
-                    datos,
-                    x="Característica",
-                    y="Valor normalizado",
-                    color="Valor normalizado",
-                    color_continuous_scale=["#39765a", "#d9b65e"],
-                    title="Distribución de medidas geométricas"
-                )
-                grafico.update_layout(
-                    paper_bgcolor="#10291f",
-                    plot_bgcolor="#10291f",
-                    font_color="#f5f2e8",
-                    coloraxis_showscale=False
-                )
-                st.plotly_chart(grafico, use_container_width=True)
-
-                st.dataframe(
-                    datos,
-                    use_container_width=True,
-                    hide_index=True
-                )
-
-                st.markdown("## 📝 Interpretación técnica")
-
-                if calidad >= 75:
-                    st.success(
-                        "La fotografía presenta condiciones técnicas "
-                        "favorables para la detección y medición."
-                    )
-                elif calidad >= 50:
-                    st.warning(
-                        "La calidad de captura es intermedia. "
-                        "Se recomienda mejorar la iluminación, el enfoque "
-                        "o el tamaño del rostro en la imagen."
-                    )
-                else:
-                    st.error(
-                        "La calidad de captura es baja. "
-                        "Se recomienda tomar otra fotografía."
-                    )
-
-                st.caption(
-                    "El porcentaje representa una estimación técnica "
-                    "de calidad de captura basada en iluminación, nitidez "
-                    "y tamaño del rostro. No representa similitud, "
-                    "probabilidad de identidad ni origen étnico."
-                )
+            st.caption(
+                "Las medidas son descriptores geometricos "
+                "experimentales. No determinan identidad, etnia "
+                "ni pertenencia a una comunidad."
+            )
 
     else:
-        st.info("Primero sube una fotografía o activa la cámara.")
+        st.info(
+            "Primero sube una fotografia o activa la camara."
+        )
 
-# --------------------------------------------------
-# INFORMACIÓN DEL PROYECTO
-# --------------------------------------------------
+
+# ==========================================
+# ACERCA DEL PROYECTO
+# ==========================================
+
 elif pagina == "Acerca del proyecto":
-    st.title("🌳 Acerca de AMAZON FACE AI")
+
+    st.title("🌳 Acerca de CRISTOFHER AMAZON AI")
 
     st.markdown("""
-    <div class="panel">
-      <h3>Identidad amazónica y tecnología</h3>
-      <p>
-      AMAZON FACE AI es una aplicación experimental que utiliza
-      técnicas de visión computacional para detectar puntos faciales
-      y calcular proporciones geométricas en fotografías.
-      </p>
-      <p>
-      Su presentación está inspirada en la biodiversidad,
-      los paisajes y la riqueza natural de la Amazonía peruana.
-      </p>
-      <div style="font-size:34px;">🌿 🌳 🦜 🐸 🌺 🌊</div>
+    <div class="hero">
+        <h2>Amazonia peruana y tecnologia</h2>
+        <p>
+        Aplicacion experimental de vision computacional
+        para la deteccion de puntos faciales y el calculo
+        de proporciones geometricas.
+        </p>
+        <div class="hero-icons">🌿 🌳 🦜 🐸 🌺 🌊</div>
     </div>
     """, unsafe_allow_html=True)
 
-    st.subheader("Tecnologías utilizadas")
+    st.markdown("### Tecnologias utilizadas")
+
     st.write("- Python")
     st.write("- Streamlit")
-    st.write("- OpenCV")
     st.write("- MediaPipe")
-    st.write("- Plotly")
+    st.write("- OpenCV")
     st.write("- NumPy")
+    st.write("- Pandas")
+    st.write("- Plotly")
 
-    st.warning(
-        "Las medidas faciales son descriptores geométricos "
-        "experimentales. No permiten determinar la etnia, "
-        "identidad ni comunidad de una persona."
+    st.markdown("### Objetivo")
+
+    st.write(
+        "Desarrollar una herramienta educativa para "
+        "explorar la deteccion facial y el analisis "
+        "geometrico mediante vision computacional."
     )
 
+    st.warning(
+        "La aplicacion no determina identidad ni origen "
+        "etnico a partir de una fotografia."
+    )
+
+
+# ==========================================
+# PIE DE PAGINA
+# ==========================================
+
 st.markdown("---")
-st.caption("AMAZON FACE AI | Proyecto experimental | Amazonía peruana")
+
+st.markdown(
+    "<p style='text-align:center;color:#d9c58c;'>"
+    "🌿 CRISTOFHER AMAZON AI | AMAZONIA PERUANA 🌿"
+    "</p>",
+    unsafe_allow_html=True
+)
+
 
 
 
