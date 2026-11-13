@@ -1,8 +1,11 @@
 
 import streamlit as st
 import numpy as np
-from PIL import Image, ImageOps
+import pandas as pd
+import mediapipe as mp
+from PIL import Image, ImageOps, ImageDraw
 from pathlib import Path
+import math
 
 # =========================================================
 # CONFIGURACIÓN GENERAL
@@ -27,27 +30,16 @@ BLANCO = "#FFFFFF"
 TEXTO = "#173D2B"
 
 # =========================================================
-# CSS: CONTRASTE Y VISIBILIDAD DE TODA LA APLICACIÓN
+# CSS: DISEÑO Y VISIBILIDAD
 # =========================================================
 
 st.markdown("""
 <style>
-
-/* ===== FONDO PRINCIPAL ===== */
-
-.stApp {
-    background-color: #FFF9E9 !important;
-}
-
-[data-testid="stAppViewContainer"] {
-    background-color: #FFF9E9 !important;
-}
-
+.stApp,
+[data-testid="stAppViewContainer"],
 [data-testid="stMain"] {
     background-color: #FFF9E9 !important;
 }
-
-/* ===== TEXTOS PRINCIPALES ===== */
 
 .stApp p,
 .stApp li,
@@ -59,27 +51,20 @@ st.markdown("""
     color: #173D2B;
 }
 
-.stApp h1,
-.stApp h2,
-.stApp h3,
-.stApp h4,
-.stApp h5 {
+.stApp h1, .stApp h2, .stApp h3,
+.stApp h4, .stApp h5 {
     color: #123D2B !important;
     font-weight: 900 !important;
 }
 
-/* ===== MENÚ LATERAL COMPLETO ===== */
-
-[data-testid="stSidebar"] {
-    background-color: #123D2B !important;
-    border-right: 3px solid #F2C968 !important;
-}
-
+[data-testid="stSidebar"],
 [data-testid="stSidebar"] > div {
     background-color: #123D2B !important;
 }
 
-/* Textos, títulos y párrafos del menú */
+[data-testid="stSidebar"] {
+    border-right: 3px solid #F2C968 !important;
+}
 
 [data-testid="stSidebar"] p,
 [data-testid="stSidebar"] span,
@@ -91,19 +76,11 @@ st.markdown("""
     opacity: 1 !important;
 }
 
-/* Títulos del menú */
-
 [data-testid="stSidebar"] h1,
 [data-testid="stSidebar"] h2,
 [data-testid="stSidebar"] h3 {
     color: #F2C968 !important;
     font-weight: 950 !important;
-}
-
-/* Opciones del índice lateral */
-
-[data-testid="stSidebar"] [data-testid="stRadio"] {
-    background-color: #123D2B !important;
 }
 
 [data-testid="stSidebar"] [data-testid="stRadio"] label {
@@ -114,17 +91,11 @@ st.markdown("""
     padding: 10px 12px !important;
     margin: 5px 0 !important;
     font-weight: 850 !important;
-    opacity: 1 !important;
 }
-
-/* Todos los textos dentro de cada opción */
 
 [data-testid="stSidebar"] [data-testid="stRadio"] label * {
     color: #FFFFFF !important;
-    opacity: 1 !important;
 }
-
-/* Opción seleccionada */
 
 [data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {
     background-color: #F2C968 !important;
@@ -137,8 +108,6 @@ st.markdown("""
     font-weight: 950 !important;
 }
 
-/* ===== BOTONES ===== */
-
 .stButton > button {
     background-color: #E2BD65 !important;
     color: #123D2B !important;
@@ -146,7 +115,6 @@ st.markdown("""
     border-radius: 10px !important;
     min-height: 48px !important;
     font-weight: 900 !important;
-    opacity: 1 !important;
 }
 
 .stButton > button *,
@@ -159,24 +127,16 @@ st.markdown("""
     border: 2px solid #123D2B !important;
 }
 
-/* ===== CARGA DE ARCHIVOS ===== */
-
-[data-testid="stFileUploader"] {
+[data-testid="stFileUploader"],
+[data-testid="stCameraInput"] {
     background-color: #FFFFFF !important;
     border: 2px solid #B58B30 !important;
     border-radius: 12px !important;
-    padding: 15px !important;
+    padding: 12px !important;
 }
 
-[data-testid="stFileUploader"] section {
-    background-color: #FFFFFF !important;
-}
-
-[data-testid="stFileUploader"] p,
-[data-testid="stFileUploader"] span,
-[data-testid="stFileUploader"] small,
-[data-testid="stFileUploader"] label,
-[data-testid="stFileUploader"] button {
+[data-testid="stFileUploader"] *,
+[data-testid="stCameraInput"] * {
     color: #123D2B !important;
     opacity: 1 !important;
     font-weight: 800 !important;
@@ -187,44 +147,13 @@ st.markdown("""
     border: 1px solid #98752D !important;
 }
 
-/* ===== CÁMARA ===== */
-
-[data-testid="stCameraInput"] {
-    background-color: #FFFFFF !important;
-    border: 2px solid #B58B30 !important;
-    border-radius: 12px !important;
-    padding: 12px !important;
-}
-
-[data-testid="stCameraInput"] * {
-    color: #123D2B !important;
-    opacity: 1 !important;
-    font-weight: 800 !important;
-}
-
-[data-testid="stCameraInput"] button {
-    background-color: #E2BD65 !important;
-    color: #123D2B !important;
-}
-
-/* ===== CAMPOS DE TEXTO ===== */
-
 .stTextInput input,
 .stNumberInput input,
 .stTextArea textarea {
     background-color: #FFFFFF !important;
     color: #123D2B !important;
     border: 2px solid #B58B30 !important;
-    border-radius: 8px !important;
 }
-
-.stTextInput input::placeholder,
-.stTextArea textarea::placeholder {
-    color: #5B665F !important;
-    opacity: 1 !important;
-}
-
-/* ===== SELECTORES Y LISTAS DESPLEGABLES ===== */
 
 .stSelectbox [data-baseweb="select"] {
     background-color: #FFFFFF !important;
@@ -233,33 +162,6 @@ st.markdown("""
 .stSelectbox [data-baseweb="select"] * {
     color: #123D2B !important;
 }
-
-[data-baseweb="popover"],
-[data-baseweb="menu"],
-[role="listbox"] {
-    background-color: #FFFFFF !important;
-}
-
-[role="option"] {
-    background-color: #FFFFFF !important;
-    color: #123D2B !important;
-    font-weight: 750 !important;
-}
-
-[role="option"]:hover {
-    background-color: #F2E6C5 !important;
-}
-
-/* ===== RADIO Y CHECKBOX ===== */
-
-[data-testid="stRadio"] label,
-[data-testid="stCheckbox"] label {
-    color: #123D2B !important;
-    opacity: 1 !important;
-    font-weight: 800 !important;
-}
-
-/* ===== MÉTRICAS ===== */
 
 [data-testid="stMetric"] {
     background-color: #FFFFFF !important;
@@ -272,10 +174,7 @@ st.markdown("""
 [data-testid="stMetricValue"],
 [data-testid="stMetricDelta"] {
     color: #123D2B !important;
-    opacity: 1 !important;
 }
-
-/* ===== MENSAJES DE INFORMACIÓN ===== */
 
 [data-testid="stAlert"] {
     background-color: #E8F0E6 !important;
@@ -286,16 +185,7 @@ st.markdown("""
 [data-testid="stAlert"] span,
 [data-testid="stAlert"] div {
     color: #173D2B !important;
-    opacity: 1 !important;
 }
-
-/* ===== TABLAS ===== */
-
-[data-testid="stDataFrame"] {
-    background-color: #FFFFFF !important;
-}
-
-/* ===== PORTADA ===== */
 
 .hero {
     background: linear-gradient(120deg, #123D2B, #286044);
@@ -318,8 +208,6 @@ st.markdown("""
     font-weight: 850 !important;
 }
 
-/* ===== TARJETAS ===== */
-
 .panel {
     background-color: #FFFFFF !important;
     border: 2px solid #D9B45B;
@@ -328,13 +216,9 @@ st.markdown("""
     margin: 10px 0;
 }
 
-.panel h3,
-.panel p,
-.panel li {
+.panel h3, .panel p, .panel li {
     color: #173D2B !important;
 }
-
-/* ===== RESULTADOS ===== */
 
 .resultado {
     background-color: #E5F0E5 !important;
@@ -352,11 +236,9 @@ st.markdown("""
 
 .resultado-texto {
     color: #123D2B !important;
-    font-size: 1.5rem;
+    font-size: 1.35rem;
     font-weight: 950;
 }
-
-/* ===== AVISOS PERSONALIZADOS ===== */
 
 .nota {
     background-color: #FFF0C5 !important;
@@ -371,34 +253,19 @@ st.markdown("""
     color: #49380F !important;
 }
 
-/* ===== SEPARADORES ===== */
-
 hr {
     border-color: #D9B45B !important;
 }
 
-/* ===== BARRA DE PROGRESO ===== */
-
-[data-testid="stProgress"] > div {
-    background-color: #D7E3D7 !important;
-}
-
-[data-testid="stProgress"] [data-testid="stProgressBar"] {
-    background-color: #205A3B !important;
-}
-
-/* ===== PIE DE PÁGINA ===== */
-
 footer {
     visibility: hidden;
 }
-
 </style>
 """, unsafe_allow_html=True)
 
 
 # =========================================================
-# FUNCIONES DE IMÁGENES
+# FUNCIONES GENERALES
 # =========================================================
 
 def cargar_imagen(archivo):
@@ -413,150 +280,248 @@ def cargar_imagen(archivo):
         return None
 
 
-def preparar_imagen(imagen):
-    return imagen.resize((256, 256))
-
-
-# =========================================================
-# SIMILITUD EN ESCALA DE GRISES
-# =========================================================
-
-def similitud_grises(img1, img2):
-
-    a = np.asarray(
-        preparar_imagen(img1).convert("L"),
-        dtype=np.float32
+def distancia(p1, p2):
+    return math.sqrt(
+        (p1[0] - p2[0]) ** 2 +
+        (p1[1] - p2[1]) ** 2
     )
 
-    b = np.asarray(
-        preparar_imagen(img2).convert("L"),
-        dtype=np.float32
-    )
-
-    diferencia = np.mean(np.abs(a - b))
-
-    resultado = 100 * (1 - diferencia / 255)
-
-    return float(np.clip(resultado, 0, 100))
-
 
 # =========================================================
-# SIMILITUD DE COLOR
+# ANÁLISIS GEOMÉTRICO FACIAL
 # =========================================================
 
-def histograma_rgb(imagen):
+def analizar_rostro(imagen_pil):
 
-    matriz = np.asarray(preparar_imagen(imagen))
-    histogramas = []
+    imagen = imagen_pil.convert("RGB")
+    ancho, alto = imagen.size
 
-    for canal in range(3):
+    imagen_array = np.asarray(imagen)
 
-        hist, _ = np.histogram(
-            matriz[:, :, canal],
-            bins=32,
-            range=(0, 256)
+    try:
+        with mp.solutions.face_mesh.FaceMesh(
+            static_image_mode=True,
+            max_num_faces=1,
+            refine_landmarks=True,
+            min_detection_confidence=0.5
+        ) as detector:
+
+            resultado = detector.process(imagen_array)
+
+    except Exception as error:
+        return None, None, str(error)
+
+    if not resultado.multi_face_landmarks:
+        return None, None, None
+
+    puntos = resultado.multi_face_landmarks[0].landmark
+
+    def punto(indice):
+        return (
+            puntos[indice].x * ancho,
+            puntos[indice].y * alto
         )
 
-        hist = hist.astype(float)
-        hist = hist / (hist.sum() + 1e-10)
+    # Puntos de referencia seleccionados
+    mejilla_izquierda = punto(234)
+    mejilla_derecha = punto(454)
 
-        histogramas.append(hist)
+    frente = punto(10)
+    menton = punto(152)
 
-    return np.array(histogramas)
+    ojo_izquierdo = punto(33)
+    ojo_derecho = punto(263)
 
+    boca_izquierda = punto(61)
+    boca_derecha = punto(291)
 
-def similitud_color(img1, img2):
+    nariz_izquierda = punto(129)
+    nariz_derecha = punto(358)
 
-    h1 = histograma_rgb(img1)
-    h2 = histograma_rgb(img2)
+    centro_boca = punto(13)
 
-    interseccion = np.minimum(h1, h2).sum(axis=1)
+    # Dimensiones principales
+    ancho_facial = distancia(
+        mejilla_izquierda,
+        mejilla_derecha
+    )
 
-    resultado = np.mean(interseccion) * 100
+    alto_facial = distancia(
+        frente,
+        menton
+    )
 
-    return float(np.clip(resultado, 0, 100))
+    if ancho_facial < 1 or alto_facial < 1:
+        return None, None, None
 
+    # Mediciones normalizadas
+    medidas = {
+        "Proporción alto/ancho facial":
+            alto_facial / ancho_facial,
 
-# =========================================================
-# MODELO MATEMÁTICO
-# =========================================================
+        "Distancia entre ojos":
+            distancia(
+                ojo_izquierdo,
+                ojo_derecho
+            ) / ancho_facial,
 
-def comparar_imagenes(img1, img2):
+        "Ancho de la boca":
+            distancia(
+                boca_izquierda,
+                boca_derecha
+            ) / ancho_facial,
 
-    gris = similitud_grises(img1, img2)
-    color = similitud_color(img1, img2)
+        "Ancho de la nariz":
+            distancia(
+                nariz_izquierda,
+                nariz_derecha
+            ) / ancho_facial,
 
-    total = 0.70 * gris + 0.30 * color
-
-    return {
-        "gris": gris,
-        "color": color,
-        "total": total
+        "Posición vertical de la boca":
+            abs(centro_boca[1] - frente[1]) / alto_facial
     }
 
+    # Dibujar referencias geométricas
+    dibujo = imagen.copy()
+    lienzo = ImageDraw.Draw(dibujo)
+
+    puntos_dibujo = [
+        mejilla_izquierda,
+        mejilla_derecha,
+        frente,
+        menton,
+        ojo_izquierdo,
+        ojo_derecho,
+        boca_izquierda,
+        boca_derecha,
+        nariz_izquierda,
+        nariz_derecha
+    ]
+
+    lineas = [
+        (mejilla_izquierda, mejilla_derecha),
+        (frente, menton),
+        (ojo_izquierdo, ojo_derecho),
+        (boca_izquierda, boca_derecha),
+        (nariz_izquierda, nariz_derecha)
+    ]
+
+    for p1, p2 in lineas:
+        lienzo.line(
+            [p1, p2],
+            fill=(220, 160, 30),
+            width=max(2, int(ancho / 250))
+        )
+
+    radio = max(3, int(ancho / 100))
+
+    for x, y in puntos_dibujo:
+        lienzo.ellipse(
+            [
+                (x-radio, y-radio),
+                (x+radio, y+radio)
+            ],
+            fill=(20, 160, 70),
+            outline=(255, 255, 255)
+        )
+
+    return medidas, dibujo, None
+
 
 # =========================================================
-# INTERPRETACIÓN
+# COMPARACIÓN DE MEDICIONES GEOMÉTRICAS
 # =========================================================
 
-def interpretar(valor):
+def comparar_medidas(medidas1, medidas2):
 
-    if valor >= 85:
-        return (
-            "MUY SIMILARES",
-            "Las imágenes presentan una elevada coincidencia "
-            "en los indicadores visuales generales analizados."
-        )
+    diferencias = {}
+    coincidencias = {}
 
-    elif valor >= 70:
-        return (
-            "SIMILARES",
-            "Las imágenes comparten varias características "
-            "visuales, aunque también presentan diferencias."
-        )
+    for nombre in medidas1:
 
-    elif valor >= 50:
-        return (
-            "SIMILITUD MODERADA",
-            "Se observan algunas coincidencias y diferencias "
-            "en las características visuales."
-        )
+        valor1 = medidas1[nombre]
+        valor2 = medidas2[nombre]
 
-    return (
-        "POCO SIMILARES",
-        "Las imágenes presentan diferencias importantes "
-        "en los indicadores visuales analizados."
+        mayor = max(abs(valor1), abs(valor2), 1e-9)
+
+        diferencia = abs(valor1 - valor2) / mayor * 100
+
+        diferencia = min(100, diferencia)
+
+        coincidencia = 100 - diferencia
+
+        diferencias[nombre] = diferencia
+        coincidencias[nombre] = coincidencia
+
+    # Promedio de las coincidencias de las mediciones
+    porcentaje = float(
+        np.mean(list(coincidencias.values()))
     )
 
+    diferencia_media = float(
+        np.mean(list(diferencias.values()))
+    )
+
+    return porcentaje, diferencia_media, diferencias, coincidencias
+
 
 # =========================================================
-# CABECERA
+# INTERPRETACIÓN DEL RESULTADO
+# =========================================================
+
+def interpretar_resultado(porcentaje):
+
+    if porcentaje >= 85:
+        return (
+            "COINCIDENCIA GEOMÉTRICA ALTA",
+            "Las proporciones geométricas medidas presentan "
+            "diferencias pequeñas."
+        )
+
+    elif porcentaje >= 70:
+        return (
+            "COINCIDENCIA GEOMÉTRICA MODERADA",
+            "Las mediciones presentan algunas diferencias."
+        )
+
+    elif porcentaje >= 50:
+        return (
+            "COINCIDENCIA GEOMÉTRICA INTERMEDIA",
+            "Se observan diferencias apreciables entre "
+            "las medidas analizadas."
+        )
+
+    else:
+        return (
+            "COINCIDENCIA GEOMÉTRICA BAJA",
+            "Las mediciones presentan diferencias considerables."
+        )
+
+
+# =========================================================
+# CABECERA PRINCIPAL
 # =========================================================
 
 st.markdown("""
 <div class="hero">
     <h1>CRISTOFHER AMAZON AI</h1>
-    <p>INTELIGENCIA ARTIFICIAL Y ANÁLISIS VISUAL</p>
+    <p>INTELIGENCIA ARTIFICIAL Y ANÁLISIS FACIAL</p>
     <p>INNOVACIÓN TECNOLÓGICA DESDE LA AMAZONÍA</p>
 </div>
 """, unsafe_allow_html=True)
 
 
 if PORTADA.exists():
-
     imagen_portada = Image.open(PORTADA)
     st.image(imagen_portada, use_container_width=True)
-
 else:
-
     st.markdown("""
     <div style="
         background:linear-gradient(120deg,#123D2B,#39734D);
         border:3px solid #F2C968;
         border-radius:18px;
         padding:55px 20px;
-        text-align:center;
-    ">
+        text-align:center;">
         <div style="font-size:65px;">🌿</div>
         <h2 style="color:#F2C968 !important;">
             BIENVENIDOS A LA AMAZONÍA
@@ -570,9 +535,8 @@ else:
 
 st.markdown("""
 <div class="nota">
-    Plataforma experimental para el análisis matemático
-    de similitud visual entre imágenes y la presentación
-    documental de fotografías amazónicas.
+    Plataforma experimental para el análisis geométrico
+    de las medidas faciales mediante métodos matemáticos.
 </div>
 """, unsafe_allow_html=True)
 
@@ -599,9 +563,7 @@ seccion = st.sidebar.radio(
 )
 
 st.sidebar.markdown("---")
-st.sidebar.markdown(
-    "### ANÁLISIS VISUAL"
-)
+st.sidebar.markdown("### ANÁLISIS GEOMÉTRICO")
 st.sidebar.markdown(
     "Tecnología desarrollada con Python y Streamlit."
 )
@@ -616,9 +578,9 @@ if seccion == "Inicio":
     st.title("BIENVENIDO A CRISTOFHER AMAZON AI")
 
     st.write("""
-    Esta plataforma permite comparar dos imágenes mediante
-    procedimientos matemáticos y mostrar sus resultados
-    a través de porcentajes, gráficos e interpretaciones.
+    Esta plataforma permite analizar las proporciones
+    geométricas observables de dos rostros mediante
+    puntos de referencia y procedimientos matemáticos.
     """)
 
     c1, c2, c3 = st.columns(3)
@@ -626,8 +588,8 @@ if seccion == "Inicio":
     with c1:
         st.markdown("""
         <div class="panel">
-            <h3>📷 IMÁGENES</h3>
-            <p>Carga fotografías desde tu dispositivo
+            <h3>📷 FOTOGRAFÍAS</h3>
+            <p>Carga imágenes desde tu dispositivo
             o utiliza la cámara.</p>
         </div>
         """, unsafe_allow_html=True)
@@ -636,8 +598,8 @@ if seccion == "Inicio":
         st.markdown("""
         <div class="panel">
             <h3>📐 MATEMÁTICAS</h3>
-            <p>Calcula indicadores de similitud
-            mediante ecuaciones.</p>
+            <p>Calcula distancias y proporciones
+            geométricas faciales.</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -651,29 +613,30 @@ if seccion == "Inicio":
         """, unsafe_allow_html=True)
 
     st.info(
-        "Utiliza el índice lateral para ingresar "
-        "a las diferentes secciones."
+        "Selecciona «Comparación matemática» "
+        "en el menú lateral para comenzar."
     )
 
 
 # =========================================================
-# SECCIÓN COMPARACIÓN
+# SECCIÓN COMPARACIÓN GEOMÉTRICA
 # =========================================================
 
 elif seccion == "Comparación matemática":
 
-    st.title("COMPARACIÓN MATEMÁTICA DE IMÁGENES")
+    st.title("COMPARACIÓN MATEMÁTICA FACIAL")
 
     st.write("""
-    Selecciona dos fotografías para calcular sus
-    semejanzas y diferencias visuales generales.
+    Carga dos fotografías frontales para analizar
+    sus mediciones geométricas.
     """)
 
     st.markdown("""
     <div class="nota">
-        El sistema compara imágenes completas.
-        No identifica personas ni determina si dos rostros
-        pertenecen a una misma persona.
+        El porcentaje representa coincidencia entre las
+        mediciones geométricas observadas. No identifica
+        personas ni determina si dos fotografías pertenecen
+        a una misma persona.
     </div>
     """, unsafe_allow_html=True)
 
@@ -684,7 +647,7 @@ elif seccion == "Comparación matemática":
 
     with izquierda:
 
-        st.subheader("📸 PRIMERA IMAGEN")
+        st.subheader("📸 PRIMER ROSTRO")
 
         archivo1 = st.file_uploader(
             "Cargar primera fotografía",
@@ -705,7 +668,7 @@ elif seccion == "Comparación matemática":
         if img1 is not None:
             st.image(
                 img1,
-                caption="PRIMERA IMAGEN",
+                caption="PRIMERA FOTOGRAFÍA",
                 use_container_width=True
             )
         else:
@@ -713,7 +676,7 @@ elif seccion == "Comparación matemática":
 
     with derecha:
 
-        st.subheader("📸 SEGUNDA IMAGEN")
+        st.subheader("📸 SEGUNDO ROSTRO")
 
         archivo2 = st.file_uploader(
             "Cargar segunda fotografía",
@@ -734,7 +697,7 @@ elif seccion == "Comparación matemática":
         if img2 is not None:
             st.image(
                 img2,
-                caption="SEGUNDA IMAGEN",
+                caption="SEGUNDA FOTOGRAFÍA",
                 use_container_width=True
             )
         else:
@@ -745,134 +708,239 @@ elif seccion == "Comparación matemática":
     if img1 is not None and img2 is not None:
 
         if st.button(
-            "🔍 CALCULAR SIMILITUD MATEMÁTICA",
+            "🔍 ANALIZAR MEDIDAS FACIALES",
             use_container_width=True
         ):
 
-            with st.spinner("Analizando las imágenes..."):
+            with st.spinner("Detectando puntos y calculando medidas..."):
 
-                datos = comparar_imagenes(img1, img2)
-                total = datos["total"]
-                categoria, explicacion = interpretar(total)
+                medidas1, dibujo1, error1 = analizar_rostro(img1)
+                medidas2, dibujo2, error2 = analizar_rostro(img2)
 
-            st.success("ANÁLISIS COMPLETADO")
-
-            st.header("RESULTADO GENERAL")
-
-            st.markdown(f"""
-            <div class="resultado">
-                <div class="resultado-numero">
-                    {total:.2f} %
-                </div>
-                <div class="resultado-texto">
-                    {categoria}
-                </div>
-                <p style="color:#173D2B !important;">
-                    Indicador experimental de similitud visual
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
-
-            st.progress(int(round(total)))
-
-            st.header("ECUACIÓN MATEMÁTICA")
-
-            st.write("""
-            Se utiliza una combinación ponderada de dos
-            indicadores visuales:
-            """)
-
-            st.latex(r"S_v = 0.70S_g + 0.30S_c")
-
-            st.write("Donde:")
-
-            st.latex(r"S_v = \text{Similitud visual total}")
-            st.latex(r"S_g = \text{Similitud en escala de grises}")
-            st.latex(r"S_c = \text{Similitud de color RGB}")
-
-            st.subheader("SUSTITUCIÓN DE VALORES")
-
-            st.latex(
-                rf"S_v = 0.70({datos['gris']:.2f})"
-                rf" + 0.30({datos['color']:.2f})"
-            )
-
-            st.latex(rf"S_v = {total:.2f}\%")
-
-            st.header("INDICADORES DEL ANÁLISIS")
-
-            col1, col2 = st.columns(2)
-
-            with col1:
-                st.metric(
-                    "ESCALA DE GRISES",
-                    f"{datos['gris']:.2f} %"
+            if error1 or error2:
+                st.error(
+                    "Ocurrió un problema al procesar las fotografías. "
+                    "Intenta nuevamente con imágenes JPG o PNG."
                 )
 
-            with col2:
-                st.metric(
-                    "SIMILITUD DE COLOR",
-                    f"{datos['color']:.2f} %"
+            elif medidas1 is None or medidas2 is None:
+
+                st.error(
+                    "No se pudo detectar un rostro en una de las "
+                    "fotografías. Utiliza imágenes frontales, claras "
+                    "y con el rostro visible."
                 )
 
-            st.header("GRÁFICO COMPARATIVO")
+            else:
 
-            grafico = {
-                "Indicador": [
-                    "Escala de grises",
-                    "Color RGB",
-                    "Similitud total"
-                ],
-                "Porcentaje": [
-                    datos["gris"],
-                    datos["color"],
-                    total
-                ]
-            }
+                porcentaje, diferencia_media, diferencias, coincidencias = (
+                    comparar_medidas(medidas1, medidas2)
+                )
 
-            st.bar_chart(
-                grafico,
-                x="Indicador",
-                y="Porcentaje"
-            )
+                categoria, explicacion = interpretar_resultado(
+                    porcentaje
+                )
 
-            st.header("INTERPRETACIÓN DE RESULTADOS")
+                st.success("ANÁLISIS GEOMÉTRICO COMPLETADO")
 
-            st.markdown(f"""
-            <div class="panel">
-                <h3>{categoria}</h3>
-                <p>{explicacion}</p>
-                <p>La similitud en escala de grises fue
-                <b>{datos['gris']:.2f} %</b>.</p>
-                <p>La similitud de color fue
-                <b>{datos['color']:.2f} %</b>.</p>
-                <p>El resultado combinado fue
-                <b>{total:.2f} %</b>.</p>
-            </div>
-            """, unsafe_allow_html=True)
+                st.header("RESULTADO GENERAL")
 
-            st.header("OBSERVACIONES")
+                r1, r2 = st.columns(2)
 
-            st.write("""
-            - La escala de grises evalúa diferencias promedio
-              entre los píxeles de ambas imágenes.
-            - El indicador RGB compara histogramas de color.
-            - La iluminación, el encuadre y la orientación
-              pueden modificar los resultados.
-            - Los porcentajes son indicadores experimentales,
-              no probabilidades ni pruebas de identidad.
-            """)
+                with r1:
+                    st.markdown(f"""
+                    <div class="resultado">
+                        <div class="resultado-numero">
+                            {porcentaje:.1f}%
+                        </div>
+                        <div class="resultado-texto">
+                            COINCIDENCIA GEOMÉTRICA
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
 
-            st.warning(
-                "Una similitud visual elevada no demuestra "
-                "que las imágenes correspondan a la misma persona."
-            )
+                with r2:
+                    st.markdown(f"""
+                    <div class="resultado">
+                        <div class="resultado-numero">
+                            {diferencia_media:.1f}%
+                        </div>
+                        <div class="resultado-texto">
+                            DIFERENCIA GEOMÉTRICA
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                st.progress(
+                    int(round(porcentaje))
+                )
+
+                st.subheader(categoria)
+                st.write(explicacion)
+
+                st.caption(
+                    "Este porcentaje resume las diferencias entre "
+                    "las proporciones geométricas seleccionadas. "
+                    "No representa un porcentaje de parecido personal "
+                    "ni una probabilidad de identidad."
+                )
+
+                # ---------------------------------------------
+                # PUNTOS FACIALES
+                # ---------------------------------------------
+
+                st.divider()
+                st.header("PUNTOS DE REFERENCIA FACIAL")
+
+                g1, g2 = st.columns(2)
+
+                with g1:
+                    st.image(
+                        dibujo1,
+                        caption="Mediciones del primer rostro",
+                        use_container_width=True
+                    )
+
+                with g2:
+                    st.image(
+                        dibujo2,
+                        caption="Mediciones del segundo rostro",
+                        use_container_width=True
+                    )
+
+                # ---------------------------------------------
+                # TABLA DE MEDICIONES
+                # ---------------------------------------------
+
+                st.divider()
+                st.header("TABLA DE MEDICIONES GEOMÉTRICAS")
+
+                filas = []
+
+                for nombre in medidas1:
+
+                    filas.append({
+                        "Característica": nombre,
+                        "Rostro 1": round(medidas1[nombre], 4),
+                        "Rostro 2": round(medidas2[nombre], 4),
+                        "Diferencia (%)": round(
+                            diferencias[nombre], 2
+                        ),
+                        "Coincidencia (%)": round(
+                            coincidencias[nombre], 2
+                        )
+                    })
+
+                tabla = pd.DataFrame(filas)
+
+                st.dataframe(
+                    tabla,
+                    use_container_width=True,
+                    hide_index=True
+                )
+
+                # ---------------------------------------------
+                # GRÁFICO DE COINCIDENCIAS
+                # ---------------------------------------------
+
+                st.divider()
+                st.header("GRÁFICO DE COINCIDENCIA POR MEDICIÓN")
+
+                datos_grafico = pd.DataFrame({
+                    "Característica": list(coincidencias.keys()),
+                    "Coincidencia (%)": list(coincidencias.values())
+                })
+
+                st.bar_chart(
+                    datos_grafico,
+                    x="Característica",
+                    y="Coincidencia (%)",
+                    y_min=0,
+                    y_max=100,
+                    use_container_width=True
+                )
+
+                # ---------------------------------------------
+                # GRÁFICO DE DIFERENCIAS
+                # ---------------------------------------------
+
+                st.header("GRÁFICO DE DIFERENCIAS")
+
+                datos_diferencia = pd.DataFrame({
+                    "Característica": list(diferencias.keys()),
+                    "Diferencia (%)": list(diferencias.values())
+                })
+
+                st.bar_chart(
+                    datos_diferencia,
+                    x="Característica",
+                    y="Diferencia (%)",
+                    y_min=0,
+                    y_max=100,
+                    use_container_width=True
+                )
+
+                # ---------------------------------------------
+                # EXPLICACIÓN MATEMÁTICA
+                # ---------------------------------------------
+
+                st.divider()
+                st.header("MÉTODO MATEMÁTICO UTILIZADO")
+
+                st.write(
+                    "Primero se calcula la diferencia relativa "
+                    "de cada medición:"
+                )
+
+                st.latex(
+                    r"D_i = "
+                    r"\frac{|M_{1i}-M_{2i}|}"
+                    r"{\max(|M_{1i}|,|M_{2i}|)}"
+                    r"\times 100"
+                )
+
+                st.write(
+                    "Después se calcula la coincidencia descriptiva "
+                    "de cada medición:"
+                )
+
+                st.latex(
+                    r"C_i = 100-D_i"
+                )
+
+                st.write(
+                    "Finalmente, se obtiene el promedio de las "
+                    "coincidencias geométricas:"
+                )
+
+                st.latex(
+                    r"C_{\mathrm{promedio}}="
+                    r"\frac{\sum_{i=1}^{n} C_i}{n}"
+                )
+
+                st.markdown(f"""
+                <div class="panel">
+                    <h3>INTERPRETACIÓN AUTOMÁTICA</h3>
+                    <p>{categoria}</p>
+                    <p>{explicacion}</p>
+                    <p>Coincidencia geométrica descriptiva:
+                    <b>{porcentaje:.2f}%</b>.</p>
+                    <p>Diferencia geométrica media:
+                    <b>{diferencia_media:.2f}%</b>.</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+                st.info(
+                    "Las mediciones pueden variar por la posición "
+                    "del rostro, la expresión facial, la iluminación, "
+                    "la perspectiva y la calidad de la fotografía."
+                )
 
     else:
 
         st.info(
-            "Selecciona las dos imágenes para habilitar "
-            "la comparación matemática."
+            "Selecciona las dos fotografías para habilitar "
+            "el análisis geométrico."
         )
 
 
@@ -909,8 +977,7 @@ elif seccion == "Galería amazónica":
     st.markdown("""
     <div class="nota">
         Esta galería tiene una finalidad documental y cultural.
-        No se utiliza para clasificar personas por origen étnico
-        ni para determinar identidades.
+        No se utiliza para identificar personas ni clasificarlas.
     </div>
     """, unsafe_allow_html=True)
 
@@ -928,26 +995,31 @@ elif seccion == "Información del proyecto":
 
     **Descripción**
 
-    Plataforma experimental desarrollada con Python y
-    Streamlit para comparar características visuales
-    generales de dos imágenes.
+    Plataforma experimental desarrollada con Python,
+    Streamlit y MediaPipe para analizar mediciones
+    geométricas observables del rostro.
 
     **Tecnologías utilizadas**
 
     - Python.
     - Streamlit.
     - NumPy.
+    - Pandas.
     - Pillow.
+    - MediaPipe.
 
     **Métodos matemáticos**
 
-    - Comparación de píxeles en escala de grises.
-    - Comparación de histogramas RGB.
-    - Combinación ponderada de indicadores.
+    - Detección de puntos de referencia faciales.
+    - Distancias euclidianas.
+    - Normalización de proporciones.
+    - Cálculo de diferencias relativas.
+    - Promedio de coincidencias geométricas.
+    - Representación gráfica de resultados.
 
     **Objetivo**
 
-    Presentar resultados matemáticos mediante ecuaciones,
+    Presentar mediciones geométricas mediante ecuaciones,
     porcentajes, gráficos e interpretaciones comprensibles.
     """)
 
@@ -961,9 +1033,10 @@ st.markdown("---")
 st.markdown("""
 <div class="hero">
     <h1>CRISTOFHER AMAZON AI</h1>
-    <p>INTELIGENCIA ARTIFICIAL · ANÁLISIS VISUAL · AMAZONÍA</p>
+    <p>INTELIGENCIA ARTIFICIAL · ANÁLISIS GEOMÉTRICO · AMAZONÍA</p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
