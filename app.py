@@ -4,9 +4,9 @@ import numpy as np
 from PIL import Image, ImageOps
 from pathlib import Path
 
-# =====================================================
-# CONFIGURACIÓN
-# =====================================================
+# =========================================================
+# CONFIGURACIÓN GENERAL
+# =========================================================
 
 st.set_page_config(
     page_title="CRISTOFHER AMAZON AI",
@@ -19,104 +19,313 @@ BASE = Path(__file__).parent
 PORTADA = BASE / "portada_amazonia.jpg"
 GALERIA = BASE / "rostros_referencia.png"
 
-# =====================================================
-# COLORES
-# =====================================================
-
 VERDE = "#123D2B"
-VERDE_CLARO = "#205A3B"
-DORADO = "#E2BD65"
+VERDE2 = "#205A3B"
+DORADO = "#F2C968"
 CREMA = "#FFF9E9"
-TEXTO = "#173D2B"
 BLANCO = "#FFFFFF"
+TEXTO = "#173D2B"
 
-# =====================================================
-# DISEÑO Y VISIBILIDAD
-# =====================================================
+# =========================================================
+# CSS: CONTRASTE Y VISIBILIDAD DE TODA LA APLICACIÓN
+# =========================================================
 
 st.markdown("""
 <style>
 
-/* FONDO GENERAL */
+/* ===== FONDO PRINCIPAL ===== */
+
 .stApp {
     background-color: #FFF9E9 !important;
 }
 
-/* TEXTO GENERAL */
-.stApp,
+[data-testid="stAppViewContainer"] {
+    background-color: #FFF9E9 !important;
+}
+
+[data-testid="stMain"] {
+    background-color: #FFF9E9 !important;
+}
+
+/* ===== TEXTOS PRINCIPALES ===== */
+
 .stApp p,
 .stApp li,
 .stApp label,
+.stApp span,
 .stApp small,
-.stApp [data-testid="stMarkdownContainer"] {
-    color: #173D2B !important;
+.stApp [data-testid="stMarkdownContainer"] p,
+.stApp [data-testid="stMarkdownContainer"] li {
+    color: #173D2B;
 }
 
-/* TÍTULOS */
 .stApp h1,
 .stApp h2,
 .stApp h3,
-.stApp h4 {
+.stApp h4,
+.stApp h5 {
     color: #123D2B !important;
     font-weight: 900 !important;
 }
 
-.stApp h1 {
-    font-size: 2.5rem !important;
-}
+/* ===== MENÚ LATERAL COMPLETO ===== */
 
-.stApp h2 {
-    font-size: 2rem !important;
-}
-
-.stApp h3 {
-    font-size: 1.45rem !important;
-}
-
-/* MENÚ LATERAL */
 [data-testid="stSidebar"] {
+    background-color: #123D2B !important;
+    border-right: 3px solid #F2C968 !important;
+}
+
+[data-testid="stSidebar"] > div {
     background-color: #123D2B !important;
 }
 
-[data-testid="stSidebar"] * {
-    color: #FFF9E9 !important;
+/* Textos, títulos y párrafos del menú */
+
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] span,
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] small,
+[data-testid="stSidebar"] li,
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] * {
+    color: #FFFFFF !important;
+    opacity: 1 !important;
 }
+
+/* Títulos del menú */
 
 [data-testid="stSidebar"] h1,
 [data-testid="stSidebar"] h2,
 [data-testid="stSidebar"] h3 {
-    color: #F3D17B !important;
+    color: #F2C968 !important;
+    font-weight: 950 !important;
 }
 
-/* PORTADA */
+/* Opciones del índice lateral */
+
+[data-testid="stSidebar"] [data-testid="stRadio"] {
+    background-color: #123D2B !important;
+}
+
+[data-testid="stSidebar"] [data-testid="stRadio"] label {
+    background-color: #205A3B !important;
+    color: #FFFFFF !important;
+    border: 1px solid #63866E !important;
+    border-radius: 9px !important;
+    padding: 10px 12px !important;
+    margin: 5px 0 !important;
+    font-weight: 850 !important;
+    opacity: 1 !important;
+}
+
+/* Todos los textos dentro de cada opción */
+
+[data-testid="stSidebar"] [data-testid="stRadio"] label * {
+    color: #FFFFFF !important;
+    opacity: 1 !important;
+}
+
+/* Opción seleccionada */
+
+[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {
+    background-color: #F2C968 !important;
+    border: 2px solid #FFFFFF !important;
+}
+
+[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked),
+[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) * {
+    color: #123D2B !important;
+    font-weight: 950 !important;
+}
+
+/* ===== BOTONES ===== */
+
+.stButton > button {
+    background-color: #E2BD65 !important;
+    color: #123D2B !important;
+    border: 2px solid #98752D !important;
+    border-radius: 10px !important;
+    min-height: 48px !important;
+    font-weight: 900 !important;
+    opacity: 1 !important;
+}
+
+.stButton > button *,
+.stButton > button p {
+    color: #123D2B !important;
+}
+
+.stButton > button:hover {
+    background-color: #F5D989 !important;
+    border: 2px solid #123D2B !important;
+}
+
+/* ===== CARGA DE ARCHIVOS ===== */
+
+[data-testid="stFileUploader"] {
+    background-color: #FFFFFF !important;
+    border: 2px solid #B58B30 !important;
+    border-radius: 12px !important;
+    padding: 15px !important;
+}
+
+[data-testid="stFileUploader"] section {
+    background-color: #FFFFFF !important;
+}
+
+[data-testid="stFileUploader"] p,
+[data-testid="stFileUploader"] span,
+[data-testid="stFileUploader"] small,
+[data-testid="stFileUploader"] label,
+[data-testid="stFileUploader"] button {
+    color: #123D2B !important;
+    opacity: 1 !important;
+    font-weight: 800 !important;
+}
+
+[data-testid="stFileUploader"] button {
+    background-color: #E2BD65 !important;
+    border: 1px solid #98752D !important;
+}
+
+/* ===== CÁMARA ===== */
+
+[data-testid="stCameraInput"] {
+    background-color: #FFFFFF !important;
+    border: 2px solid #B58B30 !important;
+    border-radius: 12px !important;
+    padding: 12px !important;
+}
+
+[data-testid="stCameraInput"] * {
+    color: #123D2B !important;
+    opacity: 1 !important;
+    font-weight: 800 !important;
+}
+
+[data-testid="stCameraInput"] button {
+    background-color: #E2BD65 !important;
+    color: #123D2B !important;
+}
+
+/* ===== CAMPOS DE TEXTO ===== */
+
+.stTextInput input,
+.stNumberInput input,
+.stTextArea textarea {
+    background-color: #FFFFFF !important;
+    color: #123D2B !important;
+    border: 2px solid #B58B30 !important;
+    border-radius: 8px !important;
+}
+
+.stTextInput input::placeholder,
+.stTextArea textarea::placeholder {
+    color: #5B665F !important;
+    opacity: 1 !important;
+}
+
+/* ===== SELECTORES Y LISTAS DESPLEGABLES ===== */
+
+.stSelectbox [data-baseweb="select"] {
+    background-color: #FFFFFF !important;
+}
+
+.stSelectbox [data-baseweb="select"] * {
+    color: #123D2B !important;
+}
+
+[data-baseweb="popover"],
+[data-baseweb="menu"],
+[role="listbox"] {
+    background-color: #FFFFFF !important;
+}
+
+[role="option"] {
+    background-color: #FFFFFF !important;
+    color: #123D2B !important;
+    font-weight: 750 !important;
+}
+
+[role="option"]:hover {
+    background-color: #F2E6C5 !important;
+}
+
+/* ===== RADIO Y CHECKBOX ===== */
+
+[data-testid="stRadio"] label,
+[data-testid="stCheckbox"] label {
+    color: #123D2B !important;
+    opacity: 1 !important;
+    font-weight: 800 !important;
+}
+
+/* ===== MÉTRICAS ===== */
+
+[data-testid="stMetric"] {
+    background-color: #FFFFFF !important;
+    border: 2px solid #D9B45B !important;
+    border-radius: 12px !important;
+    padding: 15px !important;
+}
+
+[data-testid="stMetricLabel"],
+[data-testid="stMetricValue"],
+[data-testid="stMetricDelta"] {
+    color: #123D2B !important;
+    opacity: 1 !important;
+}
+
+/* ===== MENSAJES DE INFORMACIÓN ===== */
+
+[data-testid="stAlert"] {
+    background-color: #E8F0E6 !important;
+    border: 2px solid #47734F !important;
+}
+
+[data-testid="stAlert"] p,
+[data-testid="stAlert"] span,
+[data-testid="stAlert"] div {
+    color: #173D2B !important;
+    opacity: 1 !important;
+}
+
+/* ===== TABLAS ===== */
+
+[data-testid="stDataFrame"] {
+    background-color: #FFFFFF !important;
+}
+
+/* ===== PORTADA ===== */
+
 .hero {
-    background: linear-gradient(120deg, #123D2B, #276345);
-    border: 3px solid #D9B45B;
+    background: linear-gradient(120deg, #123D2B, #286044);
+    border: 3px solid #F2C968;
     border-radius: 20px;
-    padding: 35px 20px;
+    padding: 30px 15px;
     text-align: center;
-    margin-bottom: 22px;
+    margin-bottom: 20px;
 }
 
 .hero h1 {
-    color: #F3D17B !important;
-    font-size: 2.8rem !important;
+    color: #F2C968 !important;
+    font-size: 2.7rem !important;
     font-weight: 950 !important;
 }
 
 .hero p {
     color: #FFFFFF !important;
-    font-size: 1.15rem !important;
-    font-weight: 800 !important;
+    font-size: 1.1rem !important;
+    font-weight: 850 !important;
 }
 
-/* TARJETAS */
+/* ===== TARJETAS ===== */
+
 .panel {
-    background: #FFFFFF !important;
+    background-color: #FFFFFF !important;
     border: 2px solid #D9B45B;
     border-radius: 15px;
     padding: 20px;
-    margin: 12px 0;
+    margin: 10px 0;
 }
 
 .panel h3,
@@ -125,9 +334,10 @@ st.markdown("""
     color: #173D2B !important;
 }
 
-/* RESULTADOS */
+/* ===== RESULTADOS ===== */
+
 .resultado {
-    background: #E5F0E5 !important;
+    background-color: #E5F0E5 !important;
     border: 3px solid #205A3B;
     border-radius: 18px;
     padding: 25px;
@@ -136,149 +346,80 @@ st.markdown("""
 
 .resultado-numero {
     color: #123D2B !important;
-    font-size: 3.2rem;
+    font-size: 3rem;
     font-weight: 950;
 }
 
 .resultado-texto {
     color: #123D2B !important;
     font-size: 1.5rem;
-    font-weight: 900;
+    font-weight: 950;
 }
 
-/* AVISOS */
+/* ===== AVISOS PERSONALIZADOS ===== */
+
 .nota {
-    background: #FFF0C5 !important;
+    background-color: #FFF0C5 !important;
     border-left: 7px solid #B58B30;
     border-radius: 10px;
     padding: 17px;
     color: #49380F !important;
-    font-weight: 750;
+    font-weight: 800;
 }
 
-.nota p,
-.nota span {
+.nota p {
     color: #49380F !important;
 }
 
-/* BOTONES */
-.stButton > button {
-    background: #E2BD65 !important;
-    color: #123D2B !important;
-    border: 2px solid #98752D !important;
-    border-radius: 11px !important;
-    min-height: 48px;
-    font-size: 1rem !important;
-    font-weight: 900 !important;
-}
+/* ===== SEPARADORES ===== */
 
-.stButton > button * {
-    color: #123D2B !important;
-}
-
-/* CAMPOS DE TEXTO */
-.stTextInput input,
-.stNumberInput input,
-.stTextArea textarea {
-    background: #FFFFFF !important;
-    color: #173D2B !important;
-    border: 2px solid #98752D !important;
-}
-
-/* SELECTORES */
-.stSelectbox [data-baseweb="select"] {
-    background: #FFFFFF !important;
-}
-
-.stSelectbox [data-baseweb="select"] * {
-    color: #173D2B !important;
-}
-
-/* CARGA DE IMÁGENES */
-[data-testid="stFileUploader"] {
-    background: #FFFFFF !important;
-    border: 2px solid #D9B45B !important;
-    border-radius: 12px !important;
-    padding: 12px !important;
-}
-
-[data-testid="stFileUploader"] * {
-    color: #173D2B !important;
-    font-weight: 750 !important;
-}
-
-[data-testid="stFileUploader"] button {
-    background: #E2BD65 !important;
-    color: #123D2B !important;
-}
-
-/* CÁMARA */
-[data-testid="stCameraInput"] {
-    background: #FFFFFF !important;
-    border: 2px solid #D9B45B !important;
-    border-radius: 14px !important;
-    padding: 14px !important;
-}
-
-[data-testid="stCameraInput"] * {
-    color: #173D2B !important;
-    font-weight: 800 !important;
-}
-
-[data-testid="stCameraInput"] button {
-    background: #E2BD65 !important;
-    color: #123D2B !important;
-}
-
-/* MÉTRICAS */
-[data-testid="stMetricLabel"],
-[data-testid="stMetricValue"],
-[data-testid="stMetricDelta"] {
-    color: #123D2B !important;
-}
-
-/* RADIO Y CASILLAS */
-[data-testid="stRadio"] label,
-[data-testid="stCheckbox"] label {
-    color: #173D2B !important;
-    font-weight: 800 !important;
-}
-
-/* SEPARADORES */
 hr {
     border-color: #D9B45B !important;
+}
+
+/* ===== BARRA DE PROGRESO ===== */
+
+[data-testid="stProgress"] > div {
+    background-color: #D7E3D7 !important;
+}
+
+[data-testid="stProgress"] [data-testid="stProgressBar"] {
+    background-color: #205A3B !important;
+}
+
+/* ===== PIE DE PÁGINA ===== */
+
+footer {
+    visibility: hidden;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
 
-# =====================================================
-# FUNCIONES PARA PROCESAR IMÁGENES
-# =====================================================
+# =========================================================
+# FUNCIONES DE IMÁGENES
+# =========================================================
 
 def cargar_imagen(archivo):
-
     if archivo is None:
         return None
 
     try:
-        img = Image.open(archivo)
-        img = ImageOps.exif_transpose(img)
-        return img.convert("RGB")
-
+        imagen = Image.open(archivo)
+        imagen = ImageOps.exif_transpose(imagen)
+        return imagen.convert("RGB")
     except Exception:
         return None
 
 
-def preparar_imagen(img):
+def preparar_imagen(imagen):
+    return imagen.resize((256, 256))
 
-    return img.resize((256, 256))
 
-
-# =====================================================
+# =========================================================
 # SIMILITUD EN ESCALA DE GRISES
-# =====================================================
+# =========================================================
 
 def similitud_grises(img1, img2):
 
@@ -294,19 +435,18 @@ def similitud_grises(img1, img2):
 
     diferencia = np.mean(np.abs(a - b))
 
-    similitud = 100 * (1 - diferencia / 255)
+    resultado = 100 * (1 - diferencia / 255)
 
-    return float(np.clip(similitud, 0, 100))
+    return float(np.clip(resultado, 0, 100))
 
 
-# =====================================================
-# SIMILITUD DE COLOR RGB
-# =====================================================
+# =========================================================
+# SIMILITUD DE COLOR
+# =========================================================
 
-def histograma_rgb(img):
+def histograma_rgb(imagen):
 
-    matriz = np.asarray(preparar_imagen(img))
-
+    matriz = np.asarray(preparar_imagen(imagen))
     histogramas = []
 
     for canal in range(3):
@@ -337,16 +477,16 @@ def similitud_color(img1, img2):
     return float(np.clip(resultado, 0, 100))
 
 
-# =====================================================
+# =========================================================
 # MODELO MATEMÁTICO
-# =====================================================
+# =========================================================
 
 def comparar_imagenes(img1, img2):
 
     gris = similitud_grises(img1, img2)
     color = similitud_color(img1, img2)
 
-    total = (0.70 * gris) + (0.30 * color)
+    total = 0.70 * gris + 0.30 * color
 
     return {
         "gris": gris,
@@ -355,48 +495,43 @@ def comparar_imagenes(img1, img2):
     }
 
 
-# =====================================================
+# =========================================================
 # INTERPRETACIÓN
-# =====================================================
+# =========================================================
 
-def interpretar(porcentaje):
+def interpretar(valor):
 
-    if porcentaje >= 85:
-
+    if valor >= 85:
         return (
             "MUY SIMILARES",
             "Las imágenes presentan una elevada coincidencia "
             "en los indicadores visuales generales analizados."
         )
 
-    elif porcentaje >= 70:
-
+    elif valor >= 70:
         return (
             "SIMILARES",
             "Las imágenes comparten varias características "
             "visuales, aunque también presentan diferencias."
         )
 
-    elif porcentaje >= 50:
-
+    elif valor >= 50:
         return (
             "SIMILITUD MODERADA",
             "Se observan algunas coincidencias y diferencias "
             "en las características visuales."
         )
 
-    else:
-
-        return (
-            "POCO SIMILARES",
-            "Las imágenes presentan diferencias importantes "
-            "en los indicadores visuales analizados."
-        )
+    return (
+        "POCO SIMILARES",
+        "Las imágenes presentan diferencias importantes "
+        "en los indicadores visuales analizados."
+    )
 
 
-# =====================================================
-# PORTADA PRINCIPAL
-# =====================================================
+# =========================================================
+# CABECERA
+# =========================================================
 
 st.markdown("""
 <div class="hero">
@@ -417,28 +552,18 @@ else:
     st.markdown("""
     <div style="
         background:linear-gradient(120deg,#123D2B,#39734D);
-        border:3px solid #D9B45B;
+        border:3px solid #F2C968;
         border-radius:18px;
         padding:55px 20px;
         text-align:center;
     ">
         <div style="font-size:65px;">🌿</div>
-
-        <div style="
-            color:#F3D17B;
-            font-size:30px;
-            font-weight:950;
-        ">
+        <h2 style="color:#F2C968 !important;">
             BIENVENIDOS A LA AMAZONÍA
-        </div>
-
-        <div style="
-            color:#FFFFFF;
-            font-size:19px;
-            font-weight:800;
-        ">
-            Fotografía principal de la portada
-        </div>
+        </h2>
+        <p style="color:white !important;">
+            Portada amazónica de CRISTOFHER AMAZON AI
+        </p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -454,44 +579,51 @@ st.markdown("""
 st.divider()
 
 
-# =====================================================
-# MENÚ LATERAL
-# =====================================================
+# =========================================================
+# ÍNDICE LATERAL
+# =========================================================
 
 st.sidebar.markdown("# 🌿 CRISTOFHER AMAZON AI")
-st.sidebar.markdown("## MENÚ PRINCIPAL")
+st.sidebar.markdown("## ÍNDICE DE NAVEGACIÓN")
+st.sidebar.markdown("---")
 
 seccion = st.sidebar.radio(
-    "Selecciona una sección:",
+    "SELECCIONA UNA SECCIÓN",
     [
         "Inicio",
         "Comparación matemática",
         "Galería amazónica",
         "Información del proyecto"
-    ]
+    ],
+    key="menu_principal"
+)
+
+st.sidebar.markdown("---")
+st.sidebar.markdown(
+    "### ANÁLISIS VISUAL"
+)
+st.sidebar.markdown(
+    "Tecnología desarrollada con Python y Streamlit."
 )
 
 
-# =====================================================
-# INICIO
-# =====================================================
+# =========================================================
+# SECCIÓN INICIO
+# =========================================================
 
 if seccion == "Inicio":
 
     st.title("BIENVENIDO A CRISTOFHER AMAZON AI")
 
     st.write("""
-    Esta aplicación permite comparar dos imágenes mediante
-    procedimientos matemáticos sencillos.
-
-    Los resultados se presentan mediante porcentajes,
-    ecuaciones, gráficos e interpretaciones.
+    Esta plataforma permite comparar dos imágenes mediante
+    procedimientos matemáticos y mostrar sus resultados
+    a través de porcentajes, gráficos e interpretaciones.
     """)
 
     c1, c2, c3 = st.columns(3)
 
     with c1:
-
         st.markdown("""
         <div class="panel">
             <h3>📷 IMÁGENES</h3>
@@ -501,7 +633,6 @@ if seccion == "Inicio":
         """, unsafe_allow_html=True)
 
     with c2:
-
         st.markdown("""
         <div class="panel">
             <h3>📐 MATEMÁTICAS</h3>
@@ -511,7 +642,6 @@ if seccion == "Inicio":
         """, unsafe_allow_html=True)
 
     with c3:
-
         st.markdown("""
         <div class="panel">
             <h3>📊 RESULTADOS</h3>
@@ -521,14 +651,14 @@ if seccion == "Inicio":
         """, unsafe_allow_html=True)
 
     st.info(
-        "Selecciona Comparación matemática en el menú "
-        "para comenzar."
+        "Utiliza el índice lateral para ingresar "
+        "a las diferentes secciones."
     )
 
 
-# =====================================================
-# COMPARACIÓN MATEMÁTICA
-# =====================================================
+# =========================================================
+# SECCIÓN COMPARACIÓN
+# =========================================================
 
 elif seccion == "Comparación matemática":
 
@@ -541,7 +671,7 @@ elif seccion == "Comparación matemática":
 
     st.markdown("""
     <div class="nota">
-        El análisis compara imágenes completas.
+        El sistema compara imágenes completas.
         No identifica personas ni determina si dos rostros
         pertenecen a una misma persona.
     </div>
@@ -554,79 +684,61 @@ elif seccion == "Comparación matemática":
 
     with izquierda:
 
-        st.markdown("""
-        <div class="panel">
-            <h3>📸 PRIMERA IMAGEN</h3>
-            <p>Selecciona o toma la primera fotografía.</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.subheader("📸 PRIMERA IMAGEN")
 
         archivo1 = st.file_uploader(
-            "Cargar primera imagen",
+            "Cargar primera fotografía",
             type=["jpg", "jpeg", "png"],
             key="imagen1"
         )
 
         camara1 = st.camera_input(
-            "Activar cámara para la primera imagen",
+            "Tomar primera fotografía",
             key="camara1"
         )
 
         if camara1 is not None:
             img1 = cargar_imagen(camara1)
-
         elif archivo1 is not None:
             img1 = cargar_imagen(archivo1)
 
         if img1 is not None:
-
             st.image(
                 img1,
                 caption="PRIMERA IMAGEN",
                 use_container_width=True
             )
-
         else:
-
-            st.info("Todavía no has seleccionado la primera imagen.")
+            st.info("Selecciona o toma la primera fotografía.")
 
     with derecha:
 
-        st.markdown("""
-        <div class="panel">
-            <h3>📸 SEGUNDA IMAGEN</h3>
-            <p>Selecciona o toma la segunda fotografía.</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.subheader("📸 SEGUNDA IMAGEN")
 
         archivo2 = st.file_uploader(
-            "Cargar segunda imagen",
+            "Cargar segunda fotografía",
             type=["jpg", "jpeg", "png"],
             key="imagen2"
         )
 
         camara2 = st.camera_input(
-            "Activar cámara para la segunda imagen",
+            "Tomar segunda fotografía",
             key="camara2"
         )
 
         if camara2 is not None:
             img2 = cargar_imagen(camara2)
-
         elif archivo2 is not None:
             img2 = cargar_imagen(archivo2)
 
         if img2 is not None:
-
             st.image(
                 img2,
                 caption="SEGUNDA IMAGEN",
                 use_container_width=True
             )
-
         else:
-
-            st.info("Todavía no has seleccionado la segunda imagen.")
+            st.info("Selecciona o toma la segunda fotografía.")
 
     st.divider()
 
@@ -640,105 +752,75 @@ elif seccion == "Comparación matemática":
             with st.spinner("Analizando las imágenes..."):
 
                 datos = comparar_imagenes(img1, img2)
-
                 total = datos["total"]
-
                 categoria, explicacion = interpretar(total)
 
             st.success("ANÁLISIS COMPLETADO")
 
-            # RESULTADO PRINCIPAL
-
-            st.markdown("## RESULTADO GENERAL")
+            st.header("RESULTADO GENERAL")
 
             st.markdown(f"""
             <div class="resultado">
-
                 <div class="resultado-numero">
                     {total:.2f} %
                 </div>
-
                 <div class="resultado-texto">
                     {categoria}
                 </div>
-
                 <p style="color:#173D2B !important;">
                     Indicador experimental de similitud visual
                 </p>
-
             </div>
             """, unsafe_allow_html=True)
 
             st.progress(int(round(total)))
 
-            # ECUACIÓN
-
-            st.markdown("## ECUACIÓN MATEMÁTICA UTILIZADA")
+            st.header("ECUACIÓN MATEMÁTICA")
 
             st.write("""
-            Para obtener el resultado se utiliza una combinación
-            ponderada de dos indicadores visuales.
+            Se utiliza una combinación ponderada de dos
+            indicadores visuales:
             """)
 
-            st.latex(
-                r"S_v = 0.70S_g + 0.30S_c"
-            )
+            st.latex(r"S_v = 0.70S_g + 0.30S_c")
 
             st.write("Donde:")
 
-            st.latex(
-                r"S_v = \text{Similitud visual total}"
-            )
+            st.latex(r"S_v = \text{Similitud visual total}")
+            st.latex(r"S_g = \text{Similitud en escala de grises}")
+            st.latex(r"S_c = \text{Similitud de color RGB}")
 
-            st.latex(
-                r"S_g = \text{Similitud en escala de grises}"
-            )
-
-            st.latex(
-                r"S_c = \text{Similitud de color}"
-            )
-
-            # SUSTITUCIÓN
-
-            st.markdown("### SUSTITUCIÓN DE VALORES")
+            st.subheader("SUSTITUCIÓN DE VALORES")
 
             st.latex(
                 rf"S_v = 0.70({datos['gris']:.2f})"
                 rf" + 0.30({datos['color']:.2f})"
             )
 
-            st.latex(
-                rf"S_v = {total:.2f}\%"
-            )
+            st.latex(rf"S_v = {total:.2f}\%")
 
-            # RESULTADOS PARCIALES
-
-            st.markdown("## INDICADORES DEL ANÁLISIS")
+            st.header("INDICADORES DEL ANÁLISIS")
 
             col1, col2 = st.columns(2)
 
             with col1:
-
                 st.metric(
-                    "SIMILITUD EN ESCALA DE GRISES",
+                    "ESCALA DE GRISES",
                     f"{datos['gris']:.2f} %"
                 )
 
             with col2:
-
                 st.metric(
                     "SIMILITUD DE COLOR",
                     f"{datos['color']:.2f} %"
                 )
 
-            # GRÁFICO
-
-            st.markdown("## GRÁFICO COMPARATIVO")
+            st.header("GRÁFICO COMPARATIVO")
 
             grafico = {
                 "Indicador": [
                     "Escala de grises",
-                    "Color",
+                    "Color RGB",
                     "Similitud total"
                 ],
                 "Porcentaje": [
@@ -751,57 +833,34 @@ elif seccion == "Comparación matemática":
             st.bar_chart(
                 grafico,
                 x="Indicador",
-                y="Porcentaje",
-                horizontal=True
+                y="Porcentaje"
             )
 
-            # INTERPRETACIÓN
-
-            st.markdown("## INTERPRETACIÓN DE RESULTADOS")
+            st.header("INTERPRETACIÓN DE RESULTADOS")
 
             st.markdown(f"""
             <div class="panel">
-
                 <h3>{categoria}</h3>
-
                 <p>{explicacion}</p>
-
-                <p>
-                    El análisis en escala de grises obtuvo
-                    <b>{datos['gris']:.2f} %</b>.
-                </p>
-
-                <p>
-                    El análisis de color obtuvo
-                    <b>{datos['color']:.2f} %</b>.
-                </p>
-
-                <p>
-                    La combinación matemática de ambos indicadores
-                    produjo un resultado de
-                    <b>{total:.2f} %</b>.
-                </p>
-
+                <p>La similitud en escala de grises fue
+                <b>{datos['gris']:.2f} %</b>.</p>
+                <p>La similitud de color fue
+                <b>{datos['color']:.2f} %</b>.</p>
+                <p>El resultado combinado fue
+                <b>{total:.2f} %</b>.</p>
             </div>
             """, unsafe_allow_html=True)
 
-            # OBSERVACIONES
-
-            st.markdown("## OBSERVACIONES")
+            st.header("OBSERVACIONES")
 
             st.write("""
-            1. La comparación en escala de grises evalúa
-               diferencias promedio entre píxeles.
-
-            2. La comparación de color utiliza histogramas
-               de los canales rojo, verde y azul (RGB).
-
-            3. La iluminación, el encuadre y la orientación
-               pueden modificar los resultados.
-
-            4. Los porcentajes son indicadores experimentales,
-               no probabilidades estadísticas ni resultados
-               de una prueba de identidad.
+            - La escala de grises evalúa diferencias promedio
+              entre los píxeles de ambas imágenes.
+            - El indicador RGB compara histogramas de color.
+            - La iluminación, el encuadre y la orientación
+              pueden modificar los resultados.
+            - Los porcentajes son indicadores experimentales,
+              no probabilidades ni pruebas de identidad.
             """)
 
             st.warning(
@@ -817,9 +876,9 @@ elif seccion == "Comparación matemática":
         )
 
 
-# =====================================================
-# GALERÍA DOCUMENTAL
-# =====================================================
+# =========================================================
+# SECCIÓN GALERÍA
+# =========================================================
 
 elif seccion == "Galería amazónica":
 
@@ -856,9 +915,9 @@ elif seccion == "Galería amazónica":
     """, unsafe_allow_html=True)
 
 
-# =====================================================
-# INFORMACIÓN DEL PROYECTO
-# =====================================================
+# =========================================================
+# SECCIÓN INFORMACIÓN
+# =========================================================
 
 elif seccion == "Información del proyecto":
 
@@ -893,9 +952,9 @@ elif seccion == "Información del proyecto":
     """)
 
 
-# =====================================================
+# =========================================================
 # PIE DE PÁGINA
-# =====================================================
+# =========================================================
 
 st.markdown("---")
 
